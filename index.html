@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>健力備戰</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --gold:#f59e0b;--gold2:#fbbf24;--gola:rgba(245,158,11,.15);
+  --sq:#f59e0b;--be:#60a5fa;--dl:#f87171;
+  --bg:#080808;--card:#111;--text:#f0ece4;--muted:rgba(240,236,228,.4);
+  --border:#1f1f1f;--red:#f87171;--green:#4ade80;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang TC','Noto Sans TC',sans-serif;background:#080808;color:#f0ece4;min-height:100vh;padding-bottom:110px;font-size:15px}
+
+/* ── Nav ── */
+.nav{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);
+  width:auto;max-width:calc(100vw - 28px);background:#111;border:1px solid rgba(245,158,11,.25);
+  border-radius:52px;display:flex;z-index:100;padding:6px 10px;gap:2px;box-shadow:none}
+.nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  border:none;background:none;color:var(--muted);font-size:10px;cursor:pointer;padding:8px 14px;
+  border-radius:40px;transition:color .2s,background .2s;font-family:inherit;white-space:nowrap}
+.nav-btn.active{color:var(--gold);background:rgba(245,158,11,.1)}
+.nav-btn svg{width:22px;height:22px}
+
+/* ── Toast ── */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);
+  background:#1a1a1a;border:1px solid #333;color:#f0ece4;padding:10px 20px;border-radius:24px;
+  font-size:13px;font-weight:600;z-index:500;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── Tab ── */
+.tab-content{display:block}
+.tab-content[hidden]{display:none}
+
+/* ── Cards / Sections ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.section{padding:0 16px}
+.sec-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px}
+.hint{font-size:11px;color:var(--muted)}
+
+/* ── Page header ── */
+.page-hd{padding:52px 20px 20px;position:relative}
+.page-hd h1{font-size:20px;font-weight:800;color:#f0ece4}
+.page-hd p{font-size:13px;color:var(--muted);margin-top:3px}
+.gear-btn{position:absolute;top:52px;right:18px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);
+  border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
+
+/* ── Overview: Countdown ── */
+.countdown-card{margin:0 16px 16px;background:linear-gradient(135deg,#111 0%,#161208 100%);
+  border:1px solid rgba(245,158,11,.25);border-radius:20px;padding:20px 20px 18px;position:relative;overflow:hidden}
+.countdown-card::before{content:'';position:absolute;top:-30px;right:-30px;width:130px;height:130px;
+  background:radial-gradient(circle,rgba(245,158,11,.12) 0%,transparent 70%);pointer-events:none}
+.cd-label{font-size:11px;font-weight:700;color:rgba(245,158,11,.6);letter-spacing:.5px;margin-bottom:6px}
+.cd-days{font-size:52px;font-weight:900;color:#f59e0b;line-height:1;letter-spacing:-2px}
+.cd-sub{font-size:13px;color:rgba(240,236,228,.45);margin-top:4px}
+.cd-date{font-size:12px;color:rgba(245,158,11,.5);margin-top:8px;font-weight:600}
+
+/* ── Overview: Lift comparison table ── */
+.lift-table-card{margin:0 16px 16px;background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.lt-head,.lt-row{display:grid;grid-template-columns:52px 1fr 1fr 1fr;padding:10px 14px;align-items:center}
+.lt-head{border-bottom:1px solid #1a1a1a}
+.lt-row{border-bottom:1px solid #161616}
+.lt-row:last-child{border-bottom:none}
+.lt-hd{font-size:9px;font-weight:700;color:var(--muted);text-align:center;letter-spacing:.5px;text-transform:uppercase}
+.lt-hd:first-child{text-align:left}
+.lt-name{font-size:14px;font-weight:800}
+.lt-name.sq{color:var(--sq)}.lt-name.be{color:var(--be)}.lt-name.dl{color:var(--dl)}
+.lt-cell{text-align:center}
+.lt-val{font-size:17px;font-weight:800;line-height:1}
+.lt-unit{font-size:9px;color:var(--muted);margin-top:2px}
+.lt-badge{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:700;display:inline-block;margin-top:4px}
+
+/* ── Overview: Stats ── */
+.ov-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px 16px}
+.ov-scard{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center}
+.ov-snum{font-size:20px;font-weight:800;color:var(--gold)}
+.ov-slbl{font-size:10px;color:var(--muted);margin-top:3px;font-weight:600}
+.total-card{margin:0 16px 16px;background:var(--card);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:14px 16px}
+.total-row{display:flex;align-items:center;justify-content:space-between}
+.total-label{font-size:12px;color:var(--muted);font-weight:600}
+.total-val{font-size:20px;font-weight:900;color:#f0ece4}
+.total-bar-wrap{margin-top:10px;height:4px;background:#1f1f1f;border-radius:2px;overflow:hidden}
+.total-bar-fill{height:100%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:2px;transition:width .8s cubic-bezier(.34,1.56,.64,1)}
+
+/* ── Recent sessions ── */
+.session-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.session-date{font-size:11px;color:var(--muted)}
+.session-title{font-size:14px;font-weight:700;margin-top:2px}
+.session-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.tag{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600}
+.tag.sq{background:rgba(245,158,11,.12);color:var(--sq)}
+.tag.be{background:rgba(96,165,250,.12);color:var(--be)}
+.tag.dl{background:rgba(248,113,113,.12);color:var(--dl)}
+.tag.acc{background:rgba(240,236,228,.07);color:rgba(240,236,228,.5)}
+.session-detail{display:none;margin-top:10px;border-top:1px solid #1a1a1a;padding-top:10px}
+.session-item.open .session-detail{display:block}
+
+/* ── Growth chart ── */
+.chart-filter{display:flex;gap:5px;margin-bottom:12px}
+.cf-btn{flex:1;padding:7px 2px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid #2a2a2a;background:#161616;color:rgba(240,236,228,.38);cursor:pointer;font-family:inherit;transition:all .1s}
+.cf-btn.active{background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.3)}
+.chart-wrap{position:relative;height:220px;margin-bottom:4px}
+.chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── PR Wall ── */
+.pr-lift-block{margin:0 16px 16px}
+.pr-lift-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.pr-lift-name{font-size:14px;font-weight:800}
+.pr-card-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.pr-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.pr-card-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.4px;margin-bottom:3px}
+.pr-card-val{font-size:20px;font-weight:900}
+.pr-card-date{font-size:10px;color:var(--muted);margin-top:3px}
+.pr-hist-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #161616;font-size:12px}
+.pr-hist-row:last-child{border-bottom:none}
+.pr-hist-date{color:var(--muted);flex-shrink:0;width:60px}
+.pr-hist-val{font-weight:700;color:#f0ece4}
+.pr-hist-badge{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700;margin-left:auto}
+
+/* ── Today's Training ── */
+.session-selector{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.session-selector::-webkit-scrollbar{display:none}
+.sess-chip{background:#161616;border:1px solid #2a2a2a;color:rgba(240,236,228,.5);font-size:12px;padding:7px 14px;border-radius:20px;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0;font-weight:600;transition:all .15s}
+.sess-chip.active{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:#f59e0b}
+.sess-chip.done{border-color:rgba(74,222,128,.3);color:rgba(74,222,128,.6)}
+
+.ex-group{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+.ex-group-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ex-group-name{font-size:14px;font-weight:800;color:#f0ece4}
+.ex-group-meta{font-size:11px;color:var(--muted)}
+.ex-suggested{font-size:11px;padding:3px 9px;border-radius:6px;font-weight:700}
+
+.set-row{display:grid;grid-template-columns:28px 1fr 1fr 1fr;gap:6px;align-items:center;margin-bottom:6px;padding:6px 0;border-bottom:1px solid #161616}
+.set-row:last-child{border-bottom:none;margin-bottom:0}
+.set-num{font-size:12px;color:var(--muted);font-weight:700;text-align:center}
+.set-inp{width:100%;padding:8px 6px;border:1.5px solid #2a2a2a;border-radius:8px;font-size:14px;text-align:center;
+  background:#161616;color:#f0ece4;outline:none;-webkit-appearance:none;font-family:inherit;transition:border-color .15s}
+.set-inp:focus{border-color:var(--gold)}
+.set-inp.filled{border-color:#2a3a1a;background:#0f160a;color:#4ade80}
+.set-inp-label{font-size:9px;color:var(--muted);text-align:center;margin-top:2px;display:block}
+.set-col{display:flex;flex-direction:column}
+.set-plan{font-size:10px;color:rgba(245,158,11,.5);text-align:center;margin-bottom:3px;font-weight:600}
+
+.sync-btn{width:100%;padding:16px;background:#f59e0b;color:#080808;border:none;border-radius:14px;
+  font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:4px;transition:opacity .15s,transform .1s}
+.sync-btn:active{opacity:.85;transform:scale(.98)}
+.sync-btn:disabled{background:#2a2a2a;color:#555;cursor:not-allowed}
+
+/* ── Settings modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;display:flex;align-items:flex-end;justify-content:center}
+.modal-overlay[hidden]{display:none}
+.modal{background:#0d0d0d;border:1px solid #222;border-radius:24px 24px 0 0;padding:28px 20px calc(36px + env(safe-area-inset-bottom,0px));width:100%;max-width:560px}
+.modal h2{font-size:18px;font-weight:800;margin-bottom:6px}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.form-label{font-size:13px;font-weight:700;color:#f0ece4;margin-bottom:6px;display:block;margin-top:14px}
+.form-input{width:100%;padding:12px 14px;border:1.5px solid #2a2a2a;border-radius:12px;font-size:15px;
+  background:#161616;color:#f0ece4;outline:none;font-family:inherit;-webkit-appearance:none}
+.form-input:focus{border-color:var(--gold)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border-radius:12px;
+  font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn-primary{background:#f59e0b;color:#080808;width:100%;margin-top:16px}
+.btn-ghost{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:rgba(240,236,228,.5);width:100%;margin-top:8px}
+.btn:active{opacity:.8}
+
+/* ── 1RM Calculator ── */
+.calc-lift-sel{display:flex;gap:6px;margin-bottom:14px}
+.calc-lift-btn{flex:1;padding:9px 2px;border-radius:10px;font-size:13px;font-weight:700;border:1.5px solid #2a2a2a;background:#161616;color:rgba(240,236,228,.35);cursor:pointer;font-family:inherit;transition:all .15s}
+.calc-lift-btn.sq.on{border-color:var(--sq);background:rgba(245,158,11,.12);color:var(--sq)}
+.calc-lift-btn.be.on{border-color:var(--be);background:rgba(96,165,250,.12);color:var(--be)}
+.calc-lift-btn.dl.on{border-color:var(--dl);background:rgba(248,113,113,.12);color:var(--dl)}
+.calc-inp-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.calc-inp-grp{display:flex;flex-direction:column;gap:5px}
+.calc-inp-lbl{font-size:10px;font-weight:700;color:var(--muted);text-align:center;letter-spacing:.4px}
+.calc-inp{width:100%;padding:10px 6px;border:1.5px solid #2a2a2a;border-radius:10px;font-size:17px;font-weight:700;text-align:center;background:#161616;color:#f0ece4;outline:none;font-family:inherit;-webkit-appearance:none}
+.calc-inp:focus{border-color:var(--gold)}
+.calc-res-box{border-radius:16px;padding:18px 16px;margin-bottom:12px;text-align:center}
+.calc-e1rm{font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px}
+.calc-e1rm-note{font-size:11px;color:var(--muted);margin-top:5px}
+.calc-pcts{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.calc-pct{font-size:12px;padding:4px 12px;border-radius:20px;font-weight:700}
+.calc-compare{background:#111;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.calc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px solid #161616}
+.calc-row:last-child{border-bottom:none}
+.calc-row-lbl{color:var(--muted)}
+.calc-row-val{font-weight:700}
+.rpe-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:4px}
+.rpe-tbl{border-collapse:collapse;font-size:10px;min-width:500px;width:100%}
+.rpe-tbl th,.rpe-tbl td{padding:4px 5px;text-align:center;border-bottom:1px solid #161616}
+.rpe-tbl th{color:var(--muted);font-weight:700;font-size:9px;letter-spacing:.3px}
+.rpe-tbl td{color:rgba(240,236,228,.5)}
+.rpe-tbl .hl{background:rgba(245,158,11,.2);color:#f59e0b;font-weight:800;border-radius:3px}
+.rpe-tbl .dim{color:#2a2a2a}
+details summary{font-size:12px;color:var(--muted);cursor:pointer;padding:6px 0;user-select:none}
+
+/* ── Misc ── */
+.empty{text-align:center;padding:32px 0;color:var(--muted);font-size:14px;line-height:2}
+.badge{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700;vertical-align:middle}
+.no-gas{margin:20px 16px;background:var(--card);border:1px solid rgba(245,158,11,.2);border-radius:16px;padding:20px;text-align:center}
+.no-gas p{font-size:14px;color:var(--muted);margin-bottom:14px;line-height:1.6}
+.spinning{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- 1RM Calculator Modal -->
+<div class="modal-overlay" id="calc-modal" hidden>
+  <div class="modal" style="max-height:90vh;overflow-y:auto">
+    <h2>1RM 換算器</h2>
+    <p>輸入訓練組數據，使用 RTS RPE 百分比表計算估計最大重量。</p>
+
+    <div class="calc-lift-sel">
+      <button class="calc-lift-btn sq" onclick="calcSelectLift('squat',this)">深蹲</button>
+      <button class="calc-lift-btn be" onclick="calcSelectLift('bench',this)">臥推</button>
+      <button class="calc-lift-btn dl" onclick="calcSelectLift('deadlift',this)">硬舉</button>
+    </div>
+
+    <div class="calc-inp-row">
+      <div class="calc-inp-grp">
+        <span class="calc-inp-lbl">重量 (kg)</span>
+        <input class="calc-inp" type="text" inputmode="decimal" id="calc-w" placeholder="100" oninput="runCalc()">
+      </div>
+      <div class="calc-inp-grp">
+        <span class="calc-inp-lbl">次數</span>
+        <input class="calc-inp" type="text" inputmode="numeric" id="calc-r" placeholder="3" oninput="runCalc()">
+      </div>
+      <div class="calc-inp-grp">
+        <span class="calc-inp-lbl">RPE</span>
+        <input class="calc-inp" type="text" inputmode="decimal" id="calc-rpe" placeholder="8" oninput="runCalc()">
+      </div>
+    </div>
+
+    <div id="calc-result" style="display:none">
+      <div class="calc-res-box" id="calc-res-box">
+        <div class="calc-e1rm" id="calc-e1rm-val">—</div>
+        <div class="calc-e1rm-note" id="calc-e1rm-note">kg（RPE 表換算）</div>
+        <div class="calc-pcts" id="calc-pcts"></div>
+      </div>
+      <div class="calc-compare">
+        <div class="calc-row"><span class="calc-row-lbl">Epley 公式</span><span class="calc-row-val" id="cmp-epley">—</span></div>
+        <div class="calc-row"><span class="calc-row-lbl">Brzycki 公式</span><span class="calc-row-val" id="cmp-brzycki">—</span></div>
+        <div class="calc-row"><span class="calc-row-lbl">使用 RPE%</span><span class="calc-row-val" id="cmp-pct" style="color:var(--gold)">—</span></div>
+      </div>
+      <details>
+        <summary>展開 RTS RPE 百分比表</summary>
+        <div class="rpe-table-scroll" style="margin-top:8px">
+          <table class="rpe-tbl" id="rpe-ref-table"></table>
+        </div>
+      </details>
+    </div>
+    <div id="calc-empty" style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px">填入上方數值即時換算</div>
+
+    <button class="btn btn-ghost" onclick="closeCalc()" style="margin-top:12px">關閉</button>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal" hidden>
+  <div class="modal">
+    <h2>連線設定</h2>
+    <p>貼上試算表 ID 即可立即讀取數據；之後請教練部署 GAS 後再填入網址，才能寫回實際成績。</p>
+    <label class="form-label">Google Sheets ID</label>
+    <input class="form-input" type="text" id="sheet-id-input" placeholder="1yrBGS3rPrT4WzFKoKk2kBww5qi8fp_Ba">
+    <p style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.6">網址列 /d/<strong>這裡</strong>/edit 之間的字串。試算表需設為「知道連結的人可以檢視」。</p>
+    <label class="form-label">GAS 網址（可選，設定後才能寫回 Sheets）</label>
+    <input class="form-input" type="url" id="gas-input" placeholder="https://script.google.com/macros/s/...">
+    <label class="form-label" style="margin-top:12px">訓練記錄分頁 GID <span style="font-weight:400;color:var(--muted)">（點該分頁後看 URL 的 #gid= 數字）</span></label>
+    <input class="form-input" type="text" inputmode="numeric" id="records-gid-input" placeholder="1491016348（已知，填這個）">
+    <label class="form-label">目前 1RM（kg）</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 8px">
+      <div style="text-align:center;font-size:11px;color:var(--sq)">深蹲</div>
+      <div style="text-align:center;font-size:11px;color:var(--be)">臥推</div>
+      <div style="text-align:center;font-size:11px;color:var(--dl)">硬舉</div>
+      <input class="form-input" type="text" inputmode="decimal" id="base-sq-input" placeholder="105" style="text-align:center;margin-top:0">
+      <input class="form-input" type="text" inputmode="decimal" id="base-be-input" placeholder="68" style="text-align:center;margin-top:0">
+      <input class="form-input" type="text" inputmode="decimal" id="base-dl-input" placeholder="150" style="text-align:center;margin-top:0">
+    </div>
+    <label class="form-label" style="margin-top:12px">比賽目標 1RM（kg）</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <input class="form-input" type="text" inputmode="decimal" id="goal-sq-input" placeholder="115" style="text-align:center">
+      <input class="form-input" type="text" inputmode="decimal" id="goal-be-input" placeholder="75" style="text-align:center">
+      <input class="form-input" type="text" inputmode="decimal" id="goal-dl-input" placeholder="160" style="text-align:center">
+    </div>
+    <label class="form-label">比賽日期（精英盃）</label>
+    <input class="form-input" type="date" id="comp-date-input">
+    <label class="form-label">體重（kg）</label>
+    <input class="form-input" type="text" inputmode="decimal" id="bw-input" placeholder="72">
+    <label class="form-label">健力訓練起始列 <span style="font-weight:400;color:var(--muted)">（忽略此列之前的資料，例如填 73 跳過半馬訓練）</span></label>
+    <input class="form-input" type="text" inputmode="numeric" id="start-row-input" placeholder="1（不過濾）">
+    <button class="btn btn-primary" onclick="saveSettings()">儲存並同步</button>
+    <button class="btn btn-ghost" onclick="runDiag()">🔍 診斷（看不到數據時用）</button>
+    <button class="btn btn-ghost" onclick="closeSettings()">關閉</button>
+  </div>
+</div>
+
+<!-- Diag Modal -->
+<div class="modal-overlay" id="diag-modal" hidden>
+  <div class="modal" style="max-height:80vh;overflow-y:auto">
+    <h2>診斷結果</h2>
+    <pre id="diag-out" style="font-size:11px;color:var(--text);white-space:pre-wrap;word-break:break-all;background:rgba(255,255,255,.04);padding:10px;border-radius:8px;line-height:1.6"></pre>
+    <button class="btn btn-ghost" onclick="document.getElementById('diag-modal').hidden=true">關閉</button>
+  </div>
+</div>
+
+<!-- TAB: 總覽 -->
+<div id="tab-overview" class="tab-content">
+  <div class="page-hd">
+    <h1 id="ov-name">健力備戰</h1>
+    <p id="ov-sub">連線後查看訓練數據</p>
+    <div style="position:absolute;top:52px;right:18px;display:flex;gap:8px;align-items:center">
+      <button class="gear-btn" style="position:static" onclick="openCalc()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/>
+          <line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>
+        </svg>
+      </button>
+      <button class="gear-btn" style="position:static" onclick="openSettings()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="countdown-card" id="countdown-card">
+    <div class="cd-label">精英盃倒數</div>
+    <div class="cd-days" id="cd-days">—</div>
+    <div class="cd-sub" id="cd-sub">天後比賽</div>
+    <div class="cd-date" id="cd-date"></div>
+  </div>
+  <div class="lift-table-card" id="lift-table"></div>
+  <div class="total-card" id="total-card">
+    <div class="total-row">
+      <div>
+        <div class="total-label">預估總和</div>
+        <div class="total-val" id="total-val">— kg</div>
+      </div>
+      <div style="text-align:right">
+        <div class="total-label">DOTS</div>
+        <div style="font-size:18px;font-weight:800;color:var(--gold)" id="wilks-val">—</div>
+      </div>
+    </div>
+    <div class="total-bar-wrap"><div class="total-bar-fill" id="total-bar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:5px">
+      <span class="hint">目前 e1RM 加總</span>
+      <span class="hint" id="total-goal-lbl">目標 — kg</span>
+    </div>
+  </div>
+  <div class="ov-stats" id="ov-stats">
+    <div class="ov-scard"><div class="ov-snum" id="ov-sessions">—</div><div class="ov-slbl">總訓練場</div></div>
+    <div class="ov-scard"><div class="ov-snum" id="ov-week">—</div><div class="ov-slbl">目前週次</div></div>
+    <div class="ov-scard"><div class="ov-snum" id="ov-days">—</div><div class="ov-slbl">距比賽週</div></div>
+  </div>
+  <div id="attempt-card" style="display:none;margin:10px 16px 0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--text)">🏆 出賽試舉建議</span>
+      <span style="font-size:10px;color:var(--muted)">依目前訓練 e1RM 估算</span>
+    </div>
+    <div id="attempt-body"></div>
+  </div>
+  <div class="section" style="padding-top:4px;padding-bottom:14px">
+    <div class="sec-title">訓練紀錄</div>
+    <div id="recent-list"></div>
+  </div>
+</div>
+
+<!-- TAB: 成長 -->
+<div id="tab-growth" class="tab-content" hidden>
+  <div class="page-hd"><h1>成長曲線</h1><p>e1RM 趨勢 + 週訓練量</p></div>
+  <div class="section" style="padding-top:4px">
+    <div class="card">
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--sq)"></div>深蹲</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--be)"></div>臥推</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--dl)"></div>硬舉</div>
+      </div>
+      <div class="chart-filter" id="e1rm-filter">
+        <button class="cf-btn" onclick="setGrowthRange('4w',this)">4週</button>
+        <button class="cf-btn" onclick="setGrowthRange('8w',this)">8週</button>
+        <button class="cf-btn active" onclick="setGrowthRange('all',this)">全部</button>
+      </div>
+      <div class="chart-wrap"><canvas id="e1rm-chart"></canvas></div>
+      <p class="hint" style="margin-top:6px">估計最大重量（RPE換算法）</p>
+      <div id="wow-stats" style="margin-top:10px;grid-template-columns:repeat(3,1fr);gap:6px;display:none"></div>
+    </div>
+    <div class="sec-title" style="margin-top:4px">週訓練量</div>
+    <div class="card">
+      <div class="chart-filter" id="vol-filter">
+        <button class="cf-btn" onclick="setVolRange('6w',this)">6週</button>
+        <button class="cf-btn active" onclick="setVolRange('all',this)">全部</button>
+      </div>
+      <div class="chart-wrap"><canvas id="volume-chart"></canvas></div>
+      <p class="hint" style="margin-top:6px">重量 × 次數（kg）</p>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: PR牆 -->
+<div id="tab-pr" class="tab-content" hidden>
+  <div class="page-hd"><h1>PR 牆</h1><p>個人最佳紀錄</p></div>
+  <div id="pr-content"></div>
+</div>
+
+<!-- TAB: 今日訓練 -->
+<div id="tab-today" class="tab-content" hidden>
+  <div class="page-hd"><h1>今日訓練</h1><p id="today-sub">選擇訓練場次</p></div>
+  <div class="section" style="padding-top:4px">
+    <div class="session-selector" id="session-selector"></div>
+    <div id="today-content"></div>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav class="nav">
+  <button class="nav-btn active" data-tab="overview" onclick="goTab('overview',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    總覽
+  </button>
+  <button class="nav-btn" data-tab="growth" onclick="goTab('growth',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    成長
+  </button>
+  <button class="nav-btn" data-tab="pr" onclick="goTab('pr',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    PR牆
+  </button>
+  <button class="nav-btn" data-tab="today" onclick="goTab('today',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    今日
+  </button>
+</nav>
+
+<script>
+// ── Constants ──
+Chart.register(ChartDataLabels);
+
+const GAS_KEY   = 'plift_gas';
+const SHEET_KEY = 'plift_sheet_id';
+const CACHE_KEY = 'plift_cache';
+const CFG_KEY   = 'plift_cfg';
+
+const LIFT_CFG = {
+  squat:    {name:'深蹲',  color:'#f59e0b', cls:'sq', keywords:['比賽深蹲','暫停深蹲','前蹲','深蹲(別','高腳杯深蹲以外的深蹲']},
+  bench:    {name:'臥推',  color:'#60a5fa', cls:'be', keywords:['比賽臥推','停頓臥推','臥推(']},
+  deadlift: {name:'硬舉',  color:'#f87171', cls:'dl', keywords:['比賽硬舉','暫停硬舉','相撲硬舉','傳統硬舉']},
+};
+// Broad secondary keywords — only match if no incline/row prefix
+const LIFT_BROAD = {
+  squat:    ['深蹲'],
+  bench:    ['臥推'],
+  deadlift: ['硬舉'],
+};
+// Prefixes that mark an exercise as supplementary (not a competition lift)
+const ACC_PREFIXES = ['上斜','下斜','啞鈴','槓鈴臥推以外','坐姿','單邊','羅馬尼亞','早安','俯身'];
+
+function liftOf(ex) {
+  // Normalize full-width brackets → ASCII so keyword matching works regardless of input form
+  const n = (ex || '').replace(/（/g, '(').replace(/）/g, ')');
+  // 1. Exact competition-lift keywords first
+  for (const [k, cfg] of Object.entries(LIFT_CFG)) {
+    if (cfg.keywords.some(kw => n.includes(kw))) return k;
+  }
+  // 2. Broad keywords, but skip if it looks like an accessory
+  const isAcc = ACC_PREFIXES.some(p => n.startsWith(p));
+  if (!isAcc) {
+    for (const [k, broads] of Object.entries(LIFT_BROAD)) {
+      if (broads.some(kw => n.includes(kw))) return k;
+    }
+  }
+  return null;
+}
+
+// ── State ──
+let profile = {}, records = [], trend = [];
+let sessions = [];       // [{section, date, day, dayKey, records}]
+let currentSessionKey = null;
+let sessionEdits = {};   // rowIndex → {actualWeight?, actualReps?, actualRPE?}
+let chartE1RM = null, chartVol = null;
+let growthRange = 'all', volRange = 'all';
+
+// ── Config ──
+function getCfg() { return JSON.parse(localStorage.getItem(CFG_KEY)||'{}'); }
+function saveCfg(c) { localStorage.setItem(CFG_KEY, JSON.stringify(c)); }
+function getGAS() { return localStorage.getItem(GAS_KEY)||''; }
+function getSheetId() { return localStorage.getItem(SHEET_KEY)||''; }
+
+// ── gviz direct-read helpers ──
+function gvizVal(row, idx) {
+  const c = row.c && row.c[idx];
+  if (!c || c.v === null || c.v === undefined) return null;
+  return c.v;
+}
+function gvizStr(row, idx) {
+  const v = gvizVal(row, idx);
+  if (v === null) return null;
+  // gviz serialises dates as "Date(Y,M,D)" — convert to readable
+  const dm = String(v).match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  if (dm) return `${dm[1]}/${+dm[2]+1}/${dm[3]}`;
+  return String(v).trim();
+}
+function gvizNum(row, idx) {
+  const v = gvizVal(row, idx);
+  if (v === null || v === '' || v === '—') return null;
+  const n = parseFloat(String(v).replace(/%/g,'').trim());
+  return isNaN(n) ? null : n;
+}
+let _gvizCnt = 0;
+// sheetRef: sheet name string OR numeric gid (number)
+function gvizFetch(sheetId, sheetRef) {
+  return new Promise((resolve, reject) => {
+    const cb = '__gviz_' + (++_gvizCnt);
+    const s  = document.createElement('script');
+    window[cb] = data => {
+      delete window[cb];
+      s.parentNode && s.parentNode.removeChild(s);
+      if (data.status !== 'ok') reject(new Error(data.errors?.[0]?.message || '試算表回應錯誤'));
+      else resolve(data.table);
+    };
+    s.onerror = () => {
+      delete window[cb];
+      s.parentNode && s.parentNode.removeChild(s);
+      reject(new Error('無法讀取試算表，請確認分享設定為「知道連結的人可以檢視」'));
+    };
+    // Use gid= for numeric refs, sheet= for names
+    const param = typeof sheetRef === 'number'
+      ? `gid=${sheetRef}`
+      : `sheet=${encodeURIComponent(sheetRef)}`;
+    s.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;responseHandler:${cb}&${param}`;
+    document.head.appendChild(s);
+  });
+}
+
+// Extract 1RM from the TOP of 訓練記錄 (rows 2-5 have 深蹲/臥推/硬舉 at B4/E4/I4 = indices 1/4/8)
+function parseGvizProfileFromRecordsTop(table) {
+  const profile = {};
+  if (!table?.rows) return profile;
+  // Scan only first 10 rows
+  for (let i = 0; i < Math.min(10, table.rows.length) - 1; i++) {
+    const row = table.rows[i];
+    if (!row.c) continue;
+    let sqc = -1, bec = -1, dlc = -1;
+    for (let c = 0; c < row.c.length; c++) {
+      const t = (gvizStr(row, c) || '').toLowerCase();
+      if (t.includes('深蹲') || t.includes('squat'))    sqc = c;
+      if (t.includes('臥推') || t.includes('bench'))    bec = c;
+      if (t.includes('硬舉') || t.includes('deadlift')) dlc = c;
+    }
+    if (sqc >= 0 && (bec >= 0 || dlc >= 0)) {
+      const valRow = table.rows[i + 1];
+      if (!valRow?.c) break;
+      const pick = (col) => {
+        if (col < 0) return null;
+        for (let d = 0; d <= 2; d++) {
+          const v = gvizNum(valRow, col + d) || gvizNum(valRow, col - d < 0 ? col : col - d);
+          if (v && v > 10) return v;
+        }
+        return null;
+      };
+      profile.squat1RM    = pick(sqc);
+      profile.bench1RM    = pick(bec);
+      profile.deadlift1RM = pick(dlc);
+      break;
+    }
+  }
+  return profile;
+}
+
+function parseGvizProfile(table) {
+  // Parses "1RM 換算計機" sheet:
+  // Find row with 深蹲/臥推/硬舉 headers, read values from the row below
+  if (!table?.rows) return {};
+  const profile = {};
+  for (let i = 0; i < table.rows.length - 1; i++) {
+    const row = table.rows[i];
+    if (!row.c) continue;
+    let sqc = -1, bec = -1, dlc = -1;
+    for (let c = 0; c < row.c.length; c++) {
+      const t = (gvizStr(row, c) || '').toLowerCase();
+      if (t.includes('深蹲') || t.includes('squat'))    sqc = c;
+      if (t.includes('臥推') || t.includes('bench'))    bec = c;
+      if (t.includes('硬舉') || t.includes('deadlift')) dlc = c;
+    }
+    if (sqc >= 0 && bec >= 0 && dlc >= 0) {
+      // values may be 1 column to the right (merged-cell offset) — try ±2
+      const valRow = table.rows[i + 1];
+      if (!valRow?.c) break;
+      const pick = (col) => {
+        for (let d = 0; d <= 2; d++) {
+          const v = gvizNum(valRow, col + d) || gvizNum(valRow, col - d);
+          if (v && v > 10) return v;
+        }
+        return null;
+      };
+      profile.squat1RM    = pick(sqc);
+      profile.bench1RM    = pick(bec);
+      profile.deadlift1RM = pick(dlc);
+      break;
+    }
+  }
+  return profile;
+}
+
+function parseGvizRecords(table) {
+  if (!table?.rows) return [];
+  // Debug: show the first 5 non-empty rows to understand structure
+  let debugShown = 0;
+  for (let i = 0; i < table.rows.length && debugShown < 5; i++) {
+    const r = table.rows[i];
+    if (!r.c) continue;
+    const cells = r.c.slice(0, 5).map((c,ci) => `[${ci}]=${c ? JSON.stringify(c.v) : 'null'}`).join(' ');
+    if (cells.replace(/null/g,'').replace(/\[.\]=/g,'').trim()) {
+      console.log('[gviz row', i, ']', cells);
+      debugShown++;
+    }
+  }
+  const records = [];
+  let section = '', dateStr = null, dayLabel = '';
+  let sectionSeen = false; // only collect records after first ▌ header
+  const isSkip = t => !t || t === '動作名稱' ||
+    ['主項','輔助動作','教練設定','每組訓練','建議重量根據','G欄為教練',
+     '學生填','每組訓練記錄'].some(k => t.includes(k));
+  const n = v => {
+    if (v === null || v === undefined || v === '' || v === '—') return null;
+    const num = parseFloat(String(v).replace(/%/g,'').trim());
+    return isNaN(num) ? null : num;
+  };
+  for (let i = 0; i < table.rows.length; i++) {
+    const row = table.rows[i];
+    if (!row.c) continue;
+    // detect section header — scan ALL cells
+    let secText = null;
+    for (let c = 0; c < row.c.length; c++) {
+      const t = gvizStr(row, c) || '';
+      if (t.includes('▌') || t.includes('▌')) { secText = t; break; }
+    }
+    // fallback: date + week pattern (handles sheets where ▌ might differ)
+    if (!secText) {
+      for (let c = 0; c < row.c.length; c++) {
+        const t = gvizStr(row, c) || '';
+        if (t.match(/\d{4}\/\d{1,2}\/\d{1,2}/) && t.match(/第\s*\d+\s*週/)) {
+          secText = t; break;
+        }
+      }
+    }
+    if (secText) {
+      section = secText;
+      sectionSeen = true;
+      const m = secText.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+      dateStr = m ? `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}` : null;
+      const dm = secText.match(/Day\s*(\d+)/i);
+      dayLabel = dm ? `Day ${dm[1]}` : '';
+      continue;
+    }
+    if (!sectionSeen) continue; // skip profile/header rows before first section
+    const ex = gvizStr(row, 1) || '';
+    if (!ex || isSkip(ex)) continue;
+    records.push({
+      rowIndex: i + 1,
+      section, date: dateStr, day: dayLabel, exercise: ex,
+      set:                 n(gvizVal(row, 2)),
+      plannedReps:         gvizStr(row, 3),
+      targetRPE:           n(gvizVal(row, 4)),
+      custom1RM:           n(gvizVal(row, 5)),
+      suggestedWeight:     n(gvizVal(row, 6)),
+      actualWeight:        n(gvizVal(row, 7)),
+      actualReps:          n(gvizVal(row, 8)),
+      actualRPE:           n(gvizVal(row, 9)),
+      e1RM:                n(gvizVal(row, 12)),
+      notes: (() => { const v = gvizStr(row, 14); return v ? v.replace(/^[🔴🟡🟢➡️]+\s*/u,'').trim() : ''; })(),
+      volume:              n(gvizVal(row, 15)),
+      maxE1RM:             n(gvizVal(row, 16)),
+      nextSuggestedWeight: n(gvizVal(row, 17)),
+    });
+  }
+  const secs = [...new Set(records.map(r=>r.section).filter(Boolean))];
+  console.log('[records] total:', records.length, '| sections:', secs.length, secs);
+  return records;
+}
+
+function parseGvizTrend(table) {
+  if (!table?.rows) return [];
+  const trend = [];
+  for (const row of table.rows) {
+    if (!row.c) continue;
+    const lbl = gvizStr(row, 1) || '';
+    if (!lbl || !lbl.match(/\d{4}/) || lbl === '訓練日期 （自動）') continue;
+    const sq = parseFloat(gvizVal(row, 2)) || 0;
+    const be = parseFloat(gvizVal(row, 3)) || 0;
+    const dl = parseFloat(gvizVal(row, 4)) || 0;
+    if (sq > 0 || be > 0 || dl > 0) {
+      trend.push({ label: lbl, squatE1RM: sq||null, benchE1RM: be||null, deadliftE1RM: dl||null });
+    }
+  }
+  return trend;
+}
+
+async function fetchDataDirect(sheetId, forceRefresh=false) {
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (!forceRefresh && cached) {
+    const c = JSON.parse(cached);
+    if (Date.now() - c.ts < 5*60*1000) { applyData(c.data); return; }
+  }
+
+  const data = {ok:true, profile:{}, records:[], trend:[]};
+  const errs = [];
+
+  // Fetch each sheet independently — failure in one doesn't kill the others
+  const tryFetch = async (name, parser, key) => {
+    try {
+      const table = await gvizFetch(sheetId, name);
+      data[key] = parser(table);
+    } catch(e) {
+      errs.push(`${name}: ${e.message}`);
+      console.warn(`[gviz] ${name} 失敗`, e);
+    }
+  };
+
+  const cfg = getCfg();
+  showSyncStatus('⏳ 讀取試算表…');
+
+  // 訓練記錄 — emoji-prefixed name, fallback to plain name, then GID
+  const recordsTable = await (async () => {
+    const gid = cfg.recordsGid ? Number(cfg.recordsGid) : null;
+    const names = ['📝 訓練記錄', '訓練記錄'];
+    const attempts = gid ? [gid, ...names] : names;
+    for (const ref of attempts) {
+      try {
+        const table = await gvizFetch(sheetId, ref);
+        const parsed = parseGvizRecords(table);
+        if (parsed.length > 0) { data.records = parsed; return table; }
+      } catch(e) { /* try next */ }
+    }
+    errs.push('訓練記錄: 無法讀取');
+    return null;
+  })();
+
+  // 1RM profile — first try top of records table (rows 2-5 have 1RM data)
+  // then try dedicated 1RM sheet
+  if (recordsTable) {
+    const profileFromRecords = parseGvizProfileFromRecordsTop(recordsTable);
+    if (profileFromRecords.squat1RM || profileFromRecords.bench1RM || profileFromRecords.deadlift1RM) {
+      data.profile = profileFromRecords;
+    }
+  }
+  if (!data.profile.squat1RM) {
+    await (async () => {
+      const gid = cfg.profileGid ? Number(cfg.profileGid) : null;
+      const names = ['⚡ 1RM 換算計算機', '⚡ 1RM 換算計機', '1RM 換算計算機', '1RM 換算計機'];
+      const attempts = gid ? [gid, ...names] : names;
+      for (const ref of attempts) {
+        try {
+          const table = await gvizFetch(sheetId, ref);
+          const parsed = parseGvizProfile(table);
+          if (parsed.squat1RM || parsed.bench1RM || parsed.deadlift1RM) {
+            data.profile = parsed; return;
+          }
+        } catch(e) { /* try next */ }
+      }
+    })();
+  }
+
+  // 進步趨勢圖
+  await (async () => {
+    const gid = cfg.trendGid ? Number(cfg.trendGid) : null;
+    const names = ['📈 進步趨勢圖', '進步趨勢圖'];
+    const attempts = gid ? [gid, ...names] : names;
+    for (const ref of attempts) {
+      try {
+        const table = await gvizFetch(sheetId, ref);
+        const parsed = parseGvizTrend(table);
+        if (parsed.length > 0) { data.trend = parsed; return; }
+      } catch(e) { /* try next */ }
+    }
+  })();
+
+  localStorage.setItem(CACHE_KEY, JSON.stringify({ts:Date.now(), data}));
+  applyData(data);
+
+  const rCnt = data.records.length;
+  const sCnt = new Set(data.records.map(r=>r.section).filter(Boolean)).size;
+  const tCnt = data.trend.length;
+  const statusMsg = errs.length
+    ? `⚠️ 部分讀取：${rCnt} 組 / ${sCnt} 場次（${errs.join(' | ')}）`
+    : `✅ 已讀取：${rCnt} 組記錄 · ${sCnt} 場次 · ${tCnt} 筆趨勢`;
+  showSyncStatus(statusMsg, errs.length ? 6000 : 3500);
+}
+
+function showSyncStatus(msg, dur=2500) {
+  toast(msg, dur);
+}
+
+// ── Toast ──
+function toast(msg, dur=2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), dur);
+}
+
+// ── Tab navigation ──
+function goTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.hidden=true);
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).hidden=false;
+  if(btn) btn.classList.add('active');
+  if(id==='growth') renderGrowth();
+  if(id==='pr') renderPR();
+  if(id==='today') renderToday();
+}
+
+// ── Date helpers ──
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+}
+function p2(n) { return String(n).padStart(2,'0'); }
+function fmtDate(s) {
+  if (!s) return '';
+  const [y,m,d] = s.split('-');
+  return `${+m}/${+d}`;
+}
+
+// ── DOTS coefficient (IPF current standard, replaces Wilks) ──
+function dotsCoeff(bw) {
+  return 500 / (-307.75076 + 24.0900756*bw - 0.1918759221*bw**2 + 0.0007391293*bw**3 - 0.000001093*bw**4);
+}
+
+// ── Fetch data (GAS preferred, falls back to direct Sheets) ──
+async function fetchData(forceRefresh=false) {
+  const gasUrl  = getGAS();
+  const sheetId = getSheetId();
+  if (!gasUrl && !sheetId) return;
+
+  // Use direct Sheets read if no GAS
+  if (!gasUrl) { await fetchDataDirect(sheetId, forceRefresh); return; }
+
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (!forceRefresh && cached) {
+    const c = JSON.parse(cached);
+    if (Date.now() - c.ts < 5*60*1000) { applyData(c.data); return; }
+  }
+  try {
+    toast('⏳ 同步中…');
+    const res = await fetch(gasUrl+'?action=all');
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'GAS 回應錯誤');
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ts:Date.now(), data}));
+    applyData(data);
+    toast('✅ 已同步');
+  } catch(e) {
+    toast('❌ 無法連線 GAS');
+    console.error(e);
+  }
+}
+
+function applyData(data) {
+  if (data.profile) profile = data.profile;
+  if (data.records) records = data.records;
+  if (data.trend)   trend   = data.trend;
+  buildSessions();
+  renderOverview();
+  // Re-render current tab if already open
+  const active = document.querySelector('.nav-btn.active');
+  if (active) {
+    const tab = active.dataset.tab;
+    if (tab==='growth') renderGrowth();
+    if (tab==='pr') renderPR();
+    if (tab==='today') renderToday();
+  }
+}
+
+// ── Build sessions ──
+function buildSessions() {
+  const startRow = getCfg().startRow || 1;
+  const map = {};
+  const order = [];
+  for (const r of records) {
+    if (r.rowIndex < startRow) continue;
+    const key = r.section || '未知';
+    if (!map[key]) {
+      map[key] = {section: r.section, date: r.date, day: r.day, key, records:[]};
+      order.push(key);
+    }
+    map[key].records.push(r);
+  }
+  sessions = order.map(k => map[k]);
+}
+
+function sessionIsDone(s) {
+  // A session is "done" if at least one main-lift record has actual data
+  return s.records.some(r => r.actualWeight !== null || r.actualReps !== null);
+}
+
+// ── OVERVIEW ──
+function renderOverview() {
+  const cfg = getCfg();
+  const compDate = cfg.compDate || (profile.competitionDate ? convertCompDate(profile.competitionDate) : '2026-08-04');
+  const bw = cfg.bodyweight || (profile.bodyweight ? parseFloat(profile.bodyweight) : 72);
+
+  // Name
+  if (profile.name) {
+    document.getElementById('ov-name').textContent = profile.name + ' · 健力備戰';
+  }
+
+  // Countdown
+  const today = new Date(todayStr());
+  const comp  = new Date(compDate);
+  const days  = Math.max(0, Math.round((comp - today) / 86400000));
+  document.getElementById('cd-days').textContent = days;
+  document.getElementById('cd-sub').textContent  = days > 0 ? '天後精英盃' : '比賽日';
+  document.getElementById('cd-date').textContent = `${comp.getFullYear()}/${comp.getMonth()+1}/${comp.getDate()}`;
+
+  // Latest e1RM from trend; fall back to profile 1RM
+  const latest = {squat: null, bench: null, deadlift: null};
+  for (const t of [...trend].reverse()) {
+    if (!latest.squat    && t.squatE1RM)    latest.squat    = t.squatE1RM;
+    if (!latest.bench    && t.benchE1RM)    latest.bench    = t.benchE1RM;
+    if (!latest.deadlift && t.deadliftE1RM) latest.deadlift = t.deadliftE1RM;
+    if (latest.squat && latest.bench && latest.deadlift) break;
+  }
+  if (!latest.squat)    latest.squat    = cfg.baseSq    || parseFloat(profile.squat1RM)    || null;
+  if (!latest.bench)    latest.bench    = cfg.baseBe    || parseFloat(profile.bench1RM)    || null;
+  if (!latest.deadlift) latest.deadlift = cfg.baseDl    || parseFloat(profile.deadlift1RM) || null;
+
+  const goals = {
+    squat:    cfg.goalSq || parseFloat(profile.squatGoal)    || null,
+    bench:    cfg.goalBe || parseFloat(profile.benchGoal)    || null,
+    deadlift: cfg.goalDl || parseFloat(profile.deadliftGoal) || null,
+  };
+  const baselines = {
+    squat:    cfg.baseSq    || parseFloat(profile.squat1RM)    || null,
+    bench:    cfg.baseBe    || parseFloat(profile.bench1RM)    || null,
+    deadlift: cfg.baseDl    || parseFloat(profile.deadlift1RM) || null,
+  };
+  // Best training e1RM per lift (from trend or records)
+  const trainBest = {squat:null, bench:null, deadlift:null};
+  for (const t of trend) {
+    if (t.squatE1RM    && t.squatE1RM    > (trainBest.squat   ||0)) trainBest.squat    = t.squatE1RM;
+    if (t.benchE1RM    && t.benchE1RM    > (trainBest.bench   ||0)) trainBest.bench    = t.benchE1RM;
+    if (t.deadliftE1RM && t.deadliftE1RM > (trainBest.deadlift||0)) trainBest.deadlift = t.deadliftE1RM;
+  }
+  // Fall back to per-set e1RM from records (RPE table or spreadsheet formula)
+  for (const r of records) {
+    const lk = liftOf(r.exercise);
+    if (!lk) continue;
+    let e1rm = r.e1RM;
+    if (!e1rm && r.actualWeight && r.actualReps && r.actualRPE) {
+      const pct = getRPEPct(r.actualReps, r.actualRPE);
+      if (pct) e1rm = r.actualWeight / (pct / 100);
+    }
+    if (e1rm && e1rm > (trainBest[lk]||0)) trainBest[lk] = e1rm;
+  }
+
+  // Render lift comparison table
+  const liftDefs = [
+    {key:'squat',    cls:'sq', name:'深蹲', color:'var(--sq)'},
+    {key:'bench',    cls:'be', name:'臥推', color:'var(--be)'},
+    {key:'deadlift', cls:'dl', name:'硬舉', color:'var(--dl)'},
+  ];
+  const mkCell = (val, color, badge) => {
+    const v = val ? val.toFixed(1) : '—';
+    return `<div class="lt-cell">
+      <div class="lt-val" style="color:${color}">${v}</div>
+      <div class="lt-unit">${val ? 'kg' : ''}</div>
+      ${badge || ''}
+    </div>`;
+  };
+  let tableHtml = `<div class="lt-head">
+    <div class="lt-hd"></div>
+    <div class="lt-hd">目標</div>
+    <div class="lt-hd">原始記錄</div>
+    <div class="lt-hd">訓練 e1RM</div>
+  </div>`;
+  for (const ld of liftDefs) {
+    const goal = goals[ld.key];
+    const base = baselines[ld.key];
+    const train = trainBest[ld.key];
+    // Badge for training e1RM
+    let badge = '';
+    if (train && goal) {
+      const pct = Math.round((train / goal) * 100);
+      const bc = pct >= 100 ? '#4ade80' : pct >= 90 ? ld.color : 'rgba(240,236,228,.35)';
+      badge = `<span class="lt-badge" style="background:${bc}18;color:${bc}">目標 ${pct}%</span>`;
+    }
+    if (train && base) {
+      const diff = Math.round(((train - base) / base) * 100);
+      const arrow = diff >= 0 ? '▲' : '▼';
+      const bc2 = diff >= 0 ? '#4ade80' : '#f87171';
+      badge += `<br><span class="lt-badge" style="background:${bc2}18;color:${bc2}">${arrow} ${Math.abs(diff)}% vs 記錄</span>`;
+    }
+    tableHtml += `<div class="lt-row">
+      <div class="lt-name ${ld.cls}">${ld.name}</div>
+      ${mkCell(goal,    'rgba(240,236,228,.35)', '')}
+      ${mkCell(base,    '#f0ece4',               '')}
+      ${mkCell(train,   ld.color,                badge)}
+    </div>`;
+  }
+  document.getElementById('lift-table').innerHTML = tableHtml;
+
+  // Use training best (or baseline fallback) for total/Wilks
+  latest.squat    = trainBest.squat    || baselines.squat;
+  latest.bench    = trainBest.bench    || baselines.bench;
+  latest.deadlift = trainBest.deadlift || baselines.deadlift;
+
+  // Total
+  const totalE1RM = (latest.squat||0) + (latest.bench||0) + (latest.deadlift||0);
+  const totalGoal = (goals.squat||0) + (goals.bench||0) + (goals.deadlift||0);
+  document.getElementById('total-val').textContent = totalE1RM > 0 ? totalE1RM.toFixed(1)+' kg' : '— kg';
+  document.getElementById('total-goal-lbl').textContent = totalGoal > 0 ? `目標 ${totalGoal} kg` : '目標 —';
+  if (totalGoal > 0 && totalE1RM > 0) {
+    document.getElementById('total-bar').style.width = Math.min(100, (totalE1RM/totalGoal)*100)+'%';
+  }
+  const dots = totalE1RM > 0 ? (dotsCoeff(bw) * totalE1RM).toFixed(1) : '—';
+  document.getElementById('wilks-val').textContent = dots;
+
+  // Stats
+  const uniqueDays = new Set(records.filter(r=>r.section && sessionIsDone({records:[r]})).map(r=>r.section)).size;
+  document.getElementById('ov-sessions').textContent = uniqueDays || records.length > 0 ? sessions.filter(sessionIsDone).length : '—';
+  // Derive current week from latest session header if profile doesn't have it
+  let currentWeek = profile.currentWeek ? parseInt(profile.currentWeek) : null;
+  let totalWeeks  = profile.totalWeeks  ? parseInt(profile.totalWeeks)  : null;
+  if (!currentWeek && sessions.length) {
+    const lastSection = sessions[sessions.length - 1]?.section || '';
+    const wm = lastSection.match(/第\s*(\d+)\s*週/);
+    if (wm) currentWeek = parseInt(wm[1]);
+  }
+
+  document.getElementById('ov-week').textContent = currentWeek ? `W${currentWeek}` : '—';
+  document.getElementById('ov-days').textContent = days > 0 ? Math.ceil(days/7) : 0;
+
+  // All sessions grouped by week, newest first
+  document.getElementById('recent-list').innerHTML = renderAllSessions();
+
+  // Header sub
+  const wkDisp = currentWeek || '?';
+  const totalDisp = totalWeeks || '?';
+  document.getElementById('ov-sub').textContent = `第 ${wkDisp}/${totalDisp} 週 · 74kg 量級`;
+
+  // ── Attempt Calculator ──
+  renderAttemptCard(latest);
+}
+
+function renderAllSessions() {
+  if (!sessions.length) return '<div class="empty">連線後顯示訓練紀錄</div>';
+
+  // Group sessions by week label (第 N 週), preserving order
+  const weekMap = {};
+  const weekOrder = [];
+  for (const s of sessions) {
+    const wm = (s.section || '').match(/第\s*(\d+)\s*週/);
+    const wk = wm ? `第 ${wm[1]} 週` : '其他';
+    if (!weekMap[wk]) { weekMap[wk] = []; weekOrder.push(wk); }
+    weekMap[wk].push(s);
+  }
+
+  // Render newest week first
+  return weekOrder.slice().reverse().map(wk => {
+    const days = weekMap[wk].slice().reverse();
+    const doneCount = days.filter(sessionIsDone).length;
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 2px 6px">
+        <span style="font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.06em">${wk}</span>
+        <span style="font-size:11px;color:var(--muted)">${doneCount}/${days.length} 完成</span>
+      </div>
+      ${days.map(s => recentCard(s)).join('')}
+    </div>`;
+  }).join('');
+}
+
+function snap25(v) { return Math.round(v / 2.5) * 2.5; }
+
+function renderAttemptCard(latest) {
+  const card = document.getElementById('attempt-card');
+  const body = document.getElementById('attempt-body');
+  const lifts = [
+    {key:'squat',    name:'深蹲', color:'var(--sq)'},
+    {key:'bench',    name:'臥推', color:'var(--be)'},
+    {key:'deadlift', name:'硬舉', color:'var(--dl)'},
+  ];
+  const hasAny = lifts.some(l => latest[l.key] > 0);
+  if (!hasAny) { card.style.display='none'; return; }
+  card.style.display='block';
+
+  const rows = lifts.map(l => {
+    const e = latest[l.key] || 0;
+    if (!e) return `<div style="display:grid;grid-template-columns:40px repeat(3,1fr);gap:4px;margin-bottom:4px;align-items:center">
+      <span style="font-size:12px;font-weight:700;color:${l.color}">${l.name}</span>
+      <span style="font-size:11px;color:var(--muted);text-align:center" colspan="3">無資料</span></div>`;
+    const a1 = snap25(e * 0.93);
+    const a2 = snap25(e * 0.97);
+    const a3 = snap25(e * 1.00);
+    const cell = (v,lbl,sub) => `<div style="text-align:center;background:rgba(255,255,255,.04);border-radius:6px;padding:5px 2px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:2px">${lbl}</div>
+      <div style="font-size:15px;font-weight:800;color:var(--text)">${v}<span style="font-size:10px;font-weight:400">kg</span></div>
+      <div style="font-size:9px;color:var(--muted)">${sub}</div></div>`;
+    return `<div style="display:grid;grid-template-columns:40px repeat(3,1fr);gap:4px;margin-bottom:6px;align-items:center">
+      <span style="font-size:12px;font-weight:700;color:${l.color}">${l.name}</span>
+      ${cell(a1,'第一試','93%')}${cell(a2,'第二試','97%')}${cell(a3,'第三試','100%')}
+    </div>`;
+  }).join('');
+  body.innerHTML = rows + `<p style="font-size:10px;color:var(--muted);margin:6px 0 0;text-align:right">以目前訓練 e1RM × 百分比，取最近 2.5kg</p>`;
+}
+
+function convertCompDate(d) {
+  // "8/4" → "2026-08-04"
+  if (!d) return '2026-08-04';
+  const s = d.toString();
+  const m = s.match(/(\d+)\/(\d+)/);
+  if (m) return `2026-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  return '2026-08-04';
+}
+
+function recentCard(s) {
+  const isDone = sessionIsDone(s);
+  const mainLifts = s.records.filter(r => liftOf(r.exercise));
+  const byLift = {};
+  mainLifts.forEach(r => {
+    const l = liftOf(r.exercise);
+    if (!byLift[l]) byLift[l] = {name:r.exercise, maxE1RM:0, maxW:0, planW:r.suggestedWeight||0};
+    if (r.e1RM > byLift[l].maxE1RM) byLift[l].maxE1RM = r.e1RM;
+    if ((r.actualWeight||0) > byLift[l].maxW) byLift[l].maxW = r.actualWeight;
+    if ((r.suggestedWeight||0) > byLift[l].planW) byLift[l].planW = r.suggestedWeight;
+  });
+  const tags = Object.entries(byLift).map(([l, v]) => {
+    const c = LIFT_CFG[l];
+    const val = v.maxE1RM ? `e1RM ${v.maxE1RM.toFixed(0)}` : v.maxW ? `${v.maxW}kg` : v.planW ? `計畫 ${v.planW}kg` : '';
+    return `<span class="tag ${c.cls}">${c.name} ${val}</span>`;
+  }).join('');
+  const accCount = s.records.filter(r => !liftOf(r.exercise)).length;
+  const accTag = accCount ? `<span class="tag acc">輔助 ×${accCount}</span>` : '';
+  const label = s.section.replace(/▌\s*/,'').replace(/\|.*/,'').trim();
+  const filledCount = s.records.filter(r=>r.actualWeight).length;
+  const statusTxt = isDone ? `${filledCount} 組有成績` : `計畫 ${s.records.length} 組・尚未填入`;
+
+  const makeRow = (r) => {
+    const lift = liftOf(r.exercise);
+    const nameColor = lift ? (LIFT_CFG[lift]?.color || 'rgba(240,236,228,.7)') : 'rgba(240,236,228,.45)';
+    const hasData = r.actualWeight !== null;
+    const right = hasData
+      ? `<span style="font-weight:700">${r.actualWeight}kg×${r.actualReps}<span style="color:var(--muted);font-weight:400"> @${r.actualRPE??'—'}</span></span>`
+      : `<span style="color:rgba(245,158,11,.4);font-weight:600">${r.suggestedWeight||'—'}kg × ${r.plannedReps||'—'} <span style="color:var(--muted);font-weight:400">@${r.targetRPE||'—'}</span></span>`;
+    return `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid #141414">
+      <span style="color:${nameColor}">${r.exercise}<span style="color:var(--muted);font-size:11px"> 組${r.set}</span></span>
+      ${right}
+    </div>`;
+  };
+
+  const mainRecs = s.records.filter(r => liftOf(r.exercise));
+  const accRecs  = s.records.filter(r => !liftOf(r.exercise));
+  const sectionHd = (txt, color) =>
+    `<div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:${color};padding:7px 0 3px">${txt}</div>`;
+
+  let detailRows = '';
+  if (mainRecs.length) {
+    detailRows += sectionHd('主項', 'var(--gold)') + mainRecs.map(makeRow).join('');
+  }
+  if (accRecs.length) {
+    detailRows += sectionHd('輔助', 'rgba(240,236,228,.3)') + accRecs.map(makeRow).join('');
+  }
+
+  return `<div class="session-item" onclick="this.classList.toggle('open')">
+    <div class="session-date">${label}</div>
+    <div class="session-title">${s.day || ''} · ${statusTxt}</div>
+    <div class="session-tags">${tags}${accTag}</div>
+    <div class="session-detail">${detailRows || '<div style="padding:8px 0;font-size:12px;color:var(--muted)">無詳細資料</div>'}</div>
+  </div>`;
+}
+
+// ── GROWTH CHART ──
+function renderGrowth() {
+  renderE1RMChart();
+  renderVolumeChart();
+  renderWoW();
+}
+
+function renderWoW() {
+  const el = document.getElementById('wow-stats');
+  if (!el) return;
+  const { weeks, sqData, beData, dlData } = buildWeeklyE1RMData();
+  if (weeks.length < 2) { el.style.display = 'none'; return; }
+  const n = weeks.length;
+  const prev = { sq: sqData[n-2], be: beData[n-2], dl: dlData[n-2] };
+  const curr = { sq: sqData[n-1], be: beData[n-1], dl: dlData[n-1] };
+  const lifts = [
+    { key: 'sq', name: '深蹲', color: 'var(--sq)' },
+    { key: 'be', name: '臥推', color: 'var(--be)' },
+    { key: 'dl', name: '硬舉', color: 'var(--dl)' },
+  ];
+  const cells = lifts.map(l => {
+    const p = prev[l.key], c = curr[l.key];
+    if (!p || !c) return `<div style="text-align:center;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 4px">
+      <div style="font-size:10px;color:${l.color};font-weight:700">${l.name}</div>
+      <div style="font-size:11px;color:var(--muted)">—</div></div>`;
+    const diff = c - p;
+    const pct = ((diff / p) * 100).toFixed(1);
+    const sign = diff >= 0 ? '+' : '';
+    const clr = diff > 0 ? '#4ade80' : diff < 0 ? '#f87171' : 'var(--muted)';
+    return `<div style="text-align:center;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 4px">
+      <div style="font-size:10px;color:${l.color};font-weight:700">${l.name}</div>
+      <div style="font-size:13px;font-weight:800;color:${clr}">${sign}${pct}%</div>
+      <div style="font-size:10px;color:var(--muted)">${sign}${diff.toFixed(1)} kg</div>
+    </div>`;
+  }).join('');
+  el.style.display = 'grid';
+  el.innerHTML = cells;
+}
+
+function filterTrend() {
+  if (growthRange === 'all') return trend;
+  const weeks = growthRange === '4w' ? 4 : 8;
+  return trend.slice(-weeks * 2);
+}
+
+function extractWeekDateRange(section) {
+  // "▌  2026/5/25-5/31  |  第4週  ..." → "5/25–5/31"
+  const m = section.match(/\d{4}\/(\d{1,2})\/(\d{1,2})[–\-~～](\d{1,2}\/\d{1,2}|\d{1,2})/);
+  if (m) {
+    const start = `${+m[1]}/${+m[2]}`;
+    const end = m[3].includes('/') ? m[3].split('/').map(Number).join('/') : `${+m[1]}/${+m[3]}`;
+    return `${start}–${end}`;
+  }
+  const d = section.match(/\d{4}\/(\d{1,2})\/(\d{1,2})/);
+  return d ? `${+d[1]}/${+d[2]}` : '';
+}
+
+function buildWeeklyE1RMData() {
+  const startRow = getCfg().startRow || 1;
+  const weekMap = {};
+  const weekOrder = [];
+
+  for (const r of records) {
+    if (r.rowIndex < startRow) continue;
+    const wm = (r.section || '').match(/第\s*(\d+)\s*週/);
+    if (!wm) continue;
+    const wk = parseInt(wm[1]);
+    if (!weekMap[wk]) {
+      weekMap[wk] = { sq: null, be: null, dl: null, dateRange: extractWeekDateRange(r.section || '') };
+      weekOrder.push(wk);
+    }
+    const lift = liftOf(r.exercise);
+    if (!lift || !r.e1RM) continue;
+    const key = lift === 'squat' ? 'sq' : lift === 'bench' ? 'be' : 'dl';
+    if (weekMap[wk][key] === null || r.e1RM > weekMap[wk][key]) weekMap[wk][key] = r.e1RM;
+  }
+
+  let weeks = [...new Set(weekOrder)].sort((a, b) => a - b);
+  if (growthRange === '4w') weeks = weeks.slice(-4);
+  if (growthRange === '8w') weeks = weeks.slice(-8);
+
+  return {
+    weeks,
+    labels: weeks.map(wk => {
+      const d = weekMap[wk]?.dateRange;
+      return d ? [`第${wk}週`, `(${d})`] : [`第${wk}週`];
+    }),
+    sqData:  weeks.map(wk => weekMap[wk]?.sq  ?? null),
+    beData:  weeks.map(wk => weekMap[wk]?.be  ?? null),
+    dlData:  weeks.map(wk => weekMap[wk]?.dl  ?? null),
+    weekMap,
+  };
+}
+
+function renderE1RMChart() {
+  const { labels, sqData, beData, dlData } = buildWeeklyE1RMData();
+  if (!labels.length) return;
+
+  const mkDs = (data, color, name) => ({
+    label: name,
+    data,
+    backgroundColor: color + 'bb',
+    borderColor: color,
+    borderWidth: 1,
+    borderRadius: 4,
+    borderSkipped: false,
+  });
+
+  if (chartE1RM) chartE1RM.destroy();
+  chartE1RM = new Chart(document.getElementById('e1rm-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        mkDs(sqData, '#f59e0b', '深蹲'),
+        mkDs(beData, '#60a5fa', '臥推'),
+        mkDs(dlData, '#f87171', '硬舉'),
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111', borderColor: '#333', borderWidth: 1,
+          titleColor: '#f0ece4', bodyColor: 'rgba(240,236,228,.7)',
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) + ' kg' : '—'}` }
+        },
+        datalabels: {
+          anchor: 'end',
+          align: 'top',
+          offset: 2,
+          formatter: v => v ? v.toFixed(0) : '',
+          font: { size: 9, weight: '700' },
+          color: ctx => ctx.dataset.borderColor,
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: 'rgba(240,236,228,.5)', font: { size: 10 }, maxRotation: 0 },
+          grid: { color: '#1a1a1a' }
+        },
+        y: {
+          ticks: { color: 'rgba(240,236,228,.4)', font: { size: 10 } },
+          grid: { color: '#1a1a1a' },
+          title: { display: true, text: 'e1RM (kg)', color: 'rgba(240,236,228,.3)', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+function setGrowthRange(r, btn) {
+  growthRange = r;
+  document.querySelectorAll('#e1rm-filter .cf-btn').forEach(b => {
+    b.classList.toggle('active', b === btn);
+  });
+  renderE1RMChart();
+}
+
+// Volume chart: group by week, sum by lift
+function buildWeeklyVolume() {
+  const weekMap = {};
+  for (const r of records) {
+    if (r.actualWeight === null || r.volume === null || !r.date) continue;
+    const d = new Date(r.date);
+    const mon = new Date(d);
+    mon.setDate(d.getDate() - (d.getDay()===0 ? 6 : d.getDay()-1));
+    const wk = `${mon.getMonth()+1}/${mon.getDate()}`;
+    if (!weekMap[wk]) weekMap[wk] = {squat:0, bench:0, deadlift:0, acc:0};
+    const lift = liftOf(r.exercise);
+    if (lift) weekMap[wk][lift] += (r.volume || 0);
+    else weekMap[wk].acc += (r.volume || 0);
+  }
+  const keys = Object.keys(weekMap);
+  if (volRange === '6w') return {keys:keys.slice(-6), map:weekMap};
+  return {keys, map:weekMap};
+}
+
+function renderVolumeChart() {
+  const {keys, map} = buildWeeklyVolume();
+  if (!keys.length) return;
+
+  const mk = (l, color, key) => ({
+    label: l,
+    data: keys.map(k => map[k][key] || 0),
+    backgroundColor: color+'99',
+    borderColor: color,
+    borderWidth: 1,
+    borderRadius: 3,
+  });
+
+  if (chartVol) chartVol.destroy();
+  chartVol = new Chart(document.getElementById('volume-chart'), {
+    type: 'bar',
+    data: {
+      labels: keys,
+      datasets: [
+        mk('深蹲',   '#f59e0b', 'squat'),
+        mk('臥推',   '#60a5fa', 'bench'),
+        mk('硬舉',   '#f87171', 'deadlift'),
+        mk('輔助',   '#6b7280', 'acc'),
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend:{display:false}, tooltip:{backgroundColor:'#111',borderColor:'#333',borderWidth:1,titleColor:'#f0ece4',bodyColor:'rgba(240,236,228,.7)'}},
+      scales: {
+        x: {stacked:true, ticks:{color:'rgba(240,236,228,.4)',font:{size:10}}, grid:{color:'#1a1a1a'}},
+        y: {stacked:true, ticks:{color:'rgba(240,236,228,.4)',font:{size:10}}, grid:{color:'#1a1a1a'}}
+      }
+    }
+  });
+}
+
+function setVolRange(r, btn) {
+  volRange = r;
+  document.querySelectorAll('#vol-filter .cf-btn').forEach(b => {
+    b.classList.toggle('active', b === btn);
+  });
+  renderVolumeChart();
+}
+
+// ── PR WALL ──
+function renderPR() {
+  const el = document.getElementById('pr-content');
+  const prs = computePRs();
+
+  if (!prs.squat.maxE1RM && !prs.bench.maxE1RM && !prs.deadlift.maxE1RM) {
+    el.innerHTML = '<div class="empty">連線後顯示 PR 記錄<br><span style="font-size:12px">需要有實際訓練數據</span></div>';
+    return;
+  }
+
+  el.innerHTML = Object.entries(LIFT_CFG).map(([liftKey, lcfg]) => {
+    const pr = prs[liftKey];
+    if (!pr.maxE1RM && !pr.maxActual) return '';
+    const color = lcfg.color;
+    const histRows = pr.history.slice(-8).reverse().map(h => {
+      const isPR = h.date === pr.maxE1RMDate;
+      return `<div class="pr-hist-row">
+        <div class="pr-hist-date">${fmtDate(h.date)}</div>
+        <div class="pr-hist-val">${h.e1RM ? h.e1RM.toFixed(1)+'kg' : '—'}</div>
+        <div style="color:var(--muted);font-size:11px;flex:1;padding:0 6px">${h.exercise}</div>
+        ${isPR ? `<span class="pr-hist-badge" style="background:${color}22;color:${color}">PR</span>` : ''}
+      </div>`;
+    }).join('');
+
+    return `<div class="pr-lift-block">
+      <div class="pr-lift-hd">
+        <div class="pr-lift-name" style="color:${color}">${lcfg.name}</div>
+        <span style="font-size:11px;color:var(--muted)">${pr.count} 組記錄</span>
+      </div>
+      <div class="pr-card-row">
+        <div class="pr-card">
+          <div class="pr-card-label">最高 e1RM</div>
+          <div class="pr-card-val" style="color:${color}">${pr.maxE1RM ? pr.maxE1RM.toFixed(1)+' kg' : '—'}</div>
+          <div class="pr-card-date">${pr.maxE1RMDate ? fmtDate(pr.maxE1RMDate) : ''}</div>
+        </div>
+        <div class="pr-card">
+          <div class="pr-card-label">最高實際重量</div>
+          <div class="pr-card-val" style="color:${color}">${pr.maxActual ? pr.maxActual+' kg' : '—'}</div>
+          <div class="pr-card-date">${pr.maxActualReps ? '×'+pr.maxActualReps+' reps' : ''}</div>
+        </div>
+      </div>
+      <div class="card" style="padding:0 14px">${histRows || '<div style="padding:14px;text-align:center;color:var(--muted);font-size:12px">暫無紀錄</div>'}</div>
+    </div>`;
+  }).join('');
+}
+
+function computePRs() {
+  const result = {};
+  for (const k of Object.keys(LIFT_CFG)) {
+    result[k] = {maxE1RM:null, maxE1RMDate:null, maxActual:null, maxActualReps:null, count:0, history:[]};
+  }
+  for (const r of records) {
+    const lift = liftOf(r.exercise);
+    if (!lift) continue;
+    const pr = result[lift];
+    pr.count++;
+    if (r.e1RM) {
+      if (!pr.maxE1RM || r.e1RM > pr.maxE1RM) {
+        pr.maxE1RM = r.e1RM;
+        pr.maxE1RMDate = r.date;
+      }
+      pr.history.push({date:r.date, e1RM:r.e1RM, exercise:r.exercise});
+    }
+    if (r.actualWeight && (!pr.maxActual || r.actualWeight > pr.maxActual)) {
+      pr.maxActual = r.actualWeight;
+      pr.maxActualReps = r.actualReps;
+    }
+  }
+  // Dedupe history by date+exercise, keep max e1RM per date
+  for (const lift of Object.keys(result)) {
+    const byDate = {};
+    result[lift].history.forEach(h => {
+      const k = h.date;
+      if (!byDate[k] || h.e1RM > byDate[k].e1RM) byDate[k] = h;
+    });
+    result[lift].history = Object.values(byDate).sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  }
+  return result;
+}
+
+// ── TODAY'S TRAINING ──
+function renderToday() {
+  if (!sessions.length) {
+    document.getElementById('today-content').innerHTML =
+      '<div class="no-gas"><p>尚未連線 GAS<br>請先在設定頁貼上 Web App 網址並同步</p><button class="btn btn-primary" style="width:auto;padding:10px 24px" onclick="openSettings()">前往設定</button></div>';
+    document.getElementById('session-selector').innerHTML='';
+    return;
+  }
+
+  // Build session chips
+  const recent = sessions.slice(-8).reverse();
+  const selectorEl = document.getElementById('session-selector');
+  selectorEl.innerHTML = recent.map(s => {
+    const done = sessionIsDone(s);
+    const label = buildSessionLabel(s);
+    const active = s.key === currentSessionKey ? 'active' : '';
+    const doneClass = done ? 'done' : '';
+    return `<button class="sess-chip ${active} ${doneClass}" onclick="selectSession('${s.key}')">${done?'✓ ':''} ${label}</button>`;
+  }).join('');
+
+  // Default: most recent incomplete session
+  if (!currentSessionKey) {
+    const unfinished = sessions.slice().reverse().find(s => !sessionIsDone(s));
+    currentSessionKey = unfinished ? unfinished.key : (sessions[sessions.length-1]?.key);
+  }
+
+  renderSessionForm();
+}
+
+function buildSessionLabel(s) {
+  if (!s.section) return '未知場次';
+  const m = s.section.match(/第\s*(\d+)\s*週.*?(Day\s*\d+)/i);
+  if (m) return `W${m[1]} ${m[2]}`;
+  const m2 = s.section.match(/▌\s*([\d/\-]+)/);
+  if (m2) return m2[1];
+  return s.day || s.section.slice(0,12);
+}
+
+function selectSession(key) {
+  currentSessionKey = key;
+  sessionEdits = {};
+  renderToday();
+}
+
+function renderSessionForm() {
+  const s = sessions.find(s => s.key === currentSessionKey);
+  if (!s) { document.getElementById('today-content').innerHTML='<div class="empty">找不到場次</div>'; return; }
+
+  const label = buildSessionLabel(s);
+  document.getElementById('today-sub').textContent = label;
+
+  // Update active chip
+  document.querySelectorAll('.sess-chip').forEach(c => {
+    c.classList.toggle('active', c.textContent.trim().replace('✓ ','') === label || c.onclick.toString().includes(`'${currentSessionKey}'`));
+  });
+  // Re-mark active more reliably
+  document.querySelectorAll('.sess-chip').forEach(c => {
+    const fn = c.getAttribute('onclick') || '';
+    c.classList.toggle('active', fn.includes(`'${s.key}'`));
+  });
+
+  // Group records by exercise
+  const groups = {};
+  const groupOrder = [];
+  for (const r of s.records) {
+    if (!groups[r.exercise]) { groups[r.exercise] = []; groupOrder.push(r.exercise); }
+    groups[r.exercise].push(r);
+  }
+
+  const isMain = ex => !!liftOf(ex);
+  const mainExes  = groupOrder.filter(isMain);
+  const accExes   = groupOrder.filter(ex => !isMain(ex));
+
+  const renderGroup = (ex, recs) => {
+    const lift = liftOf(ex);
+    const lcfg = lift ? LIFT_CFG[lift] : null;
+    const color = lcfg ? lcfg.color : 'rgba(240,236,228,.4)';
+    const sugW = recs[0]?.suggestedWeight || recs[0]?.custom1RM;
+    const suggested = sugW ? `<span class="ex-suggested" style="background:${color}18;color:${color}">建議 ${sugW} kg</span>` : '';
+    const planRpe = recs[0]?.targetRPE ? `RPE ${recs[0].targetRPE}` : '';
+
+    const rows = recs.map(r => {
+      const ed = sessionEdits[r.rowIndex] || {};
+      const aw = ed.actualWeight !== undefined ? ed.actualWeight : (r.actualWeight ?? '');
+      const ar = ed.actualReps   !== undefined ? ed.actualReps   : (r.actualReps   ?? '');
+      const ap = ed.actualRPE    !== undefined ? ed.actualRPE    : (r.actualRPE    ?? '');
+      const filled = aw !== '' ? 'filled' : '';
+      const plan = r.plannedReps ? `${r.plannedReps}次` : '';
+      return `<div class="set-row">
+        <div class="set-num">${r.set}</div>
+        <div class="set-col">
+          ${plan ? `<div class="set-plan">${plan}</div>` : ''}
+          <input class="set-inp ${filled}" type="text" inputmode="decimal" placeholder="—"
+            value="${aw}" onchange="editSet(${r.rowIndex},'actualWeight',this.value,this)">
+          <span class="set-inp-label">kg</span>
+        </div>
+        <div class="set-col">
+          ${plan ? `<div class="set-plan">${plan}</div>` : ''}
+          <input class="set-inp ${filled}" type="text" inputmode="decimal" placeholder="—"
+            value="${ar}" onchange="editSet(${r.rowIndex},'actualReps',this.value,this)">
+          <span class="set-inp-label">次</span>
+        </div>
+        <div class="set-col">
+          ${planRpe ? `<div class="set-plan">${planRpe}</div>` : ''}
+          <input class="set-inp ${filled}" type="text" inputmode="decimal" placeholder="—"
+            value="${ap}" onchange="editSet(${r.rowIndex},'actualRPE',this.value,this)">
+          <span class="set-inp-label">RPE</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    const notes = recs.find(r=>r.notes)?.notes || '';
+    return `<div class="ex-group">
+      <div class="ex-group-hd">
+        <div class="ex-group-name" style="color:${color}">${ex}</div>
+        ${suggested}
+      </div>
+      ${notes ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;padding:6px 10px;background:#0d0d0d;border-radius:8px">💬 ${notes}</div>` : ''}
+      <div style="display:grid;grid-template-columns:28px 1fr 1fr 1fr;gap:6px;margin-bottom:4px">
+        <div></div>
+        <div style="font-size:10px;color:var(--muted);text-align:center">重量(kg)</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center">次數</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center">RPE</div>
+      </div>
+      ${rows}
+    </div>`;
+  };
+
+  const mainHtml = mainExes.map(ex => renderGroup(ex, groups[ex])).join('');
+  const accHtml  = accExes.map(ex => renderGroup(ex, groups[ex])).join('');
+
+  document.getElementById('today-content').innerHTML = `
+    ${mainExes.length ? `<div class="sec-title" style="margin-bottom:8px">主項</div>${mainHtml}` : ''}
+    ${accExes.length  ? `<div class="sec-title" style="margin:12px 0 8px">輔助</div>${accHtml}` : ''}
+    ${getGAS()
+      ? `<button class="sync-btn" id="sync-btn" onclick="syncSession()">↑ 同步到 Google Sheets</button>`
+      : `<button class="sync-btn" disabled>↑ 同步（需設定 GAS 網址）</button>
+         <p class="hint" style="text-align:center;margin-top:8px">請教練部署 GAS 後，在設定頁填入網址即可啟用</p>`}
+    <div style="height:8px"></div>`;
+}
+
+function editSet(rowIndex, field, val, el) {
+  if (!sessionEdits[rowIndex]) sessionEdits[rowIndex] = {};
+  sessionEdits[rowIndex][field] = val === '' ? null : parseFloat(val);
+  el.classList.toggle('filled', val !== '');
+}
+
+async function syncSession() {
+  const url = getGAS();
+  if (!url) { toast('⚠️ 請先設定 GAS 網址'); openSettings(); return; }
+
+  const updates = Object.entries(sessionEdits)
+    .map(([rowIndex, vals]) => ({rowIndex: Number(rowIndex), ...vals}))
+    .filter(u => u.actualWeight !== undefined || u.actualReps !== undefined || u.actualRPE !== undefined);
+
+  if (!updates.length) { toast('沒有新增的數據'); return; }
+
+  const btn = document.getElementById('sync-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 同步中…';
+
+  try {
+    const encoded = encodeURIComponent(JSON.stringify(updates));
+    const res = await fetch(`${url}?action=write&updates=${encoded}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    toast(`✅ 已同步 ${data.written} 筆數據到 Sheets`);
+    // Refresh data
+    localStorage.removeItem(CACHE_KEY);
+    await fetchData(true);
+    sessionEdits = {};
+  } catch(e) {
+    toast('❌ 同步失敗：'+e.message);
+    btn.disabled = false;
+    btn.textContent = '↑ 同步到 Google Sheets';
+  }
+}
+
+// ── 1RM CALCULATOR ──
+// RTS / Tuchscherer RPE Percentage Table
+// Columns: @10, @9.5, @9, @8.5, @8, @7.5, @7, @6.5, @6
+const RPE_COLS = [10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6];
+const RPE_TABLE = {
+  1:  [100,   97.8, 95.5, 93.9, 92.2, 90.7, 89.2, 87.8, 86.3],
+  2:  [95.5,  93.9, 92.2, 90.7, 89.2, 87.8, 86.3, 85.0, 83.7],
+  3:  [92.2,  90.7, 89.2, 87.8, 86.3, 85.0, 83.7, 82.4, 81.1],
+  4:  [89.2,  87.8, 86.3, 85.0, 83.7, 82.4, 81.1, 79.9, 78.6],
+  5:  [86.3,  85.0, 83.7, 82.4, 81.1, 79.9, 78.6, 77.4, 76.2],
+  6:  [83.7,  82.4, 81.1, 79.9, 78.6, 77.4, 76.2, 75.1, 73.9],
+  7:  [81.1,  79.9, 78.6, 77.4, 76.2, 75.1, 73.9, 72.3, 70.7],
+  8:  [78.6,  77.4, 76.2, 75.1, 73.9, 72.3, 70.7, 69.4, 68.0],
+  9:  [76.2,  75.1, 73.9, 72.3, 70.7, 69.4, 68.0, 66.7, 65.3],
+  10: [73.9,  72.3, 70.7, 69.4, 68.0, 66.7, 65.3, 64.0, 62.6],
+  11: [70.7,  69.4, 68.0, 66.7, 65.3, 64.0, 62.6, null, null],
+  12: [68.0,  66.7, 65.3, 64.0, 62.6, null, null, null, null],
+};
+
+let calcLift = 'squat';
+
+function getRPEPct(reps, rpe) {
+  const r = Math.round(reps);
+  if (r < 1 || r > 12) return null;
+  const row = RPE_TABLE[r];
+  if (!row) return null;
+  // Snap RPE to nearest 0.5, clamp to valid table range [6, 10]
+  let rpeSnap = Math.round(rpe * 2) / 2;
+  rpeSnap = Math.max(6, Math.min(10, rpeSnap));
+  const idx = RPE_COLS.indexOf(rpeSnap);
+  if (idx < 0) return null;
+  return row[idx]; // returns null if out of range for that rep count
+}
+
+function calcSelectLift(lift, btn) {
+  calcLift = lift;
+  document.querySelectorAll('.calc-lift-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  runCalc();
+}
+
+function openCalc(lift) {
+  if (lift) {
+    const btns = document.querySelectorAll('.calc-lift-btn');
+    const lifts = ['squat','bench','deadlift'];
+    calcLift = lift;
+    btns.forEach((b,i) => b.classList.toggle('on', lifts[i]===lift));
+  }
+  buildRPERefTable();
+  document.getElementById('calc-modal').hidden = false;
+  document.getElementById('calc-w').focus();
+}
+function closeCalc() { document.getElementById('calc-modal').hidden = true; }
+
+function buildRPERefTable() {
+  const rows = [1,2,3,4,5,6,7,8,9,10,11,12];
+  let html = '<tr><th>次\\RPE</th>';
+  RPE_COLS.forEach(c => html += `<th>${c}</th>`);
+  html += '</tr>';
+  rows.forEach(r => {
+    html += `<tr><th>${r}</th>`;
+    RPE_TABLE[r].forEach(v => {
+      html += v ? `<td>${v}</td>` : `<td class="dim">—</td>`;
+    });
+    html += '</tr>';
+  });
+  document.getElementById('rpe-ref-table').innerHTML = html;
+}
+
+function runCalc() {
+  const w   = parseFloat(document.getElementById('calc-w').value);
+  const r   = parseFloat(document.getElementById('calc-r').value);
+  const rpe = parseFloat(document.getElementById('calc-rpe').value);
+
+  const resultEl = document.getElementById('calc-result');
+  const emptyEl  = document.getElementById('calc-empty');
+
+  if (!w || !r || !rpe || w <= 0 || r <= 0 || rpe < 1 || rpe > 10) {
+    resultEl.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  resultEl.style.display = 'block';
+  emptyEl.style.display  = 'none';
+
+  // ── Primary: RPE table ──
+  const pct = getRPEPct(r, rpe);
+  const e1rmRPE = pct ? Math.round((w / (pct / 100)) * 10) / 10 : null;
+
+  // ── Secondary: Epley / Brzycki ──
+  const epley   = Math.round((w * (1 + r / 30)) * 10) / 10;
+  const brzycki = r < 37 ? Math.round((w * 36 / (37 - r)) * 10) / 10 : null;
+
+  // ── Current 1RM & goal ──
+  const liftKey = calcLift;
+  const cfg = getCfg();
+  const _baseMap = {squat: cfg.baseSq || parseFloat(profile.squat1RM), bench: cfg.baseBe || parseFloat(profile.bench1RM), deadlift: cfg.baseDl || parseFloat(profile.deadlift1RM)};
+  const cur1RM  = _baseMap[liftKey] || null;
+  const goal1RM = parseFloat(profile[liftKey==='squat'?'squatGoal':liftKey==='bench'?'benchGoal':'deadliftGoal']) || null;
+
+  const lcfg = LIFT_CFG[liftKey];
+  const color = lcfg.color;
+
+  // Result box
+  const box = document.getElementById('calc-res-box');
+  box.style.border = `1.5px solid ${color}40`;
+  box.style.background = `${color}08`;
+
+  const valEl = document.getElementById('calc-e1rm-val');
+  valEl.style.color = color;
+  valEl.textContent = e1rmRPE ? e1rmRPE.toFixed(1) : '—';
+
+  document.getElementById('calc-e1rm-note').textContent =
+    `kg（RPE ${rpe} × ${r} 次 × ${w}kg）` + (pct ? `　佔 1RM ${pct}%` : '');
+
+  // Percentage chips
+  const pctsEl = document.getElementById('calc-pcts');
+  let chips = '';
+  if (e1rmRPE && cur1RM) {
+    const p = Math.round((e1rmRPE / cur1RM) * 100);
+    const chipColor = p >= 100 ? '#4ade80' : p >= 95 ? '#f59e0b' : 'rgba(240,236,228,.4)';
+    chips += `<span class="calc-pct" style="background:${chipColor}18;color:${chipColor}">vs 當前 ${cur1RM}kg：${p}%</span>`;
+  }
+  if (e1rmRPE && goal1RM) {
+    const p = Math.round((e1rmRPE / goal1RM) * 100);
+    chips += `<span class="calc-pct" style="background:${color}18;color:${color}">目標 ${goal1RM}kg：${p}%</span>`;
+  }
+  pctsEl.innerHTML = chips;
+
+  // Comparison
+  document.getElementById('cmp-epley').textContent   = `${epley} kg`;
+  document.getElementById('cmp-brzycki').textContent = brzycki ? `${brzycki} kg` : '(次數 > 36，無效)';
+  document.getElementById('cmp-pct').textContent     = pct ? `${pct}%` : '超出表格範圍';
+
+  // Highlight the used cell in RPE table
+  buildRPERefTable();
+  if (pct) {
+    const rIdx = Math.round(r);
+    const cIdx = RPE_COLS.indexOf(Math.round(rpe * 2) / 2);
+    const tbl = document.getElementById('rpe-ref-table');
+    if (tbl) {
+      const rows = tbl.querySelectorAll('tr');
+      if (rows[rIdx]) {
+        const cells = rows[rIdx].querySelectorAll('td');
+        if (cells[cIdx]) cells[cIdx].classList.add('hl');
+      }
+    }
+  }
+}
+
+// ── SETTINGS ──
+function openSettings() {
+  const cfg = getCfg();
+  document.getElementById('sheet-id-input').value = getSheetId();
+  document.getElementById('gas-input').value = getGAS();
+  document.getElementById('base-sq-input').value = cfg.baseSq || '';
+  document.getElementById('base-be-input').value = cfg.baseBe || '';
+  document.getElementById('base-dl-input').value = cfg.baseDl || '';
+  document.getElementById('goal-sq-input').value = cfg.goalSq || '';
+  document.getElementById('goal-be-input').value = cfg.goalBe || '';
+  document.getElementById('goal-dl-input').value = cfg.goalDl || '';
+  document.getElementById('records-gid-input').value = cfg.recordsGid || '';
+  document.getElementById('comp-date-input').value = cfg.compDate || '2026-08-04';
+  document.getElementById('bw-input').value = cfg.bodyweight || (profile.bodyweight || '72');
+  document.getElementById('start-row-input').value = cfg.startRow || '';
+  document.getElementById('settings-modal').hidden = false;
+}
+function closeSettings() { document.getElementById('settings-modal').hidden = true; }
+async function saveSettings() {
+  const sheetId = document.getElementById('sheet-id-input').value.trim();
+  const url     = document.getElementById('gas-input').value.trim();
+  const compDate = document.getElementById('comp-date-input').value;
+  const bw   = parseFloat(document.getElementById('bw-input').value) || 72;
+  const baseSq = parseFloat(document.getElementById('base-sq-input').value) || null;
+  const baseBe = parseFloat(document.getElementById('base-be-input').value) || null;
+  const baseDl = parseFloat(document.getElementById('base-dl-input').value) || null;
+  const goalSq = parseFloat(document.getElementById('goal-sq-input').value) || null;
+  const goalBe = parseFloat(document.getElementById('goal-be-input').value) || null;
+  const goalDl = parseFloat(document.getElementById('goal-dl-input').value) || null;
+  const recordsGid = document.getElementById('records-gid-input').value.trim() || null;
+  const startRow = parseInt(document.getElementById('start-row-input').value) || null;
+  localStorage.setItem(SHEET_KEY, sheetId);
+  localStorage.setItem(GAS_KEY, url);
+  saveCfg({compDate, bodyweight: bw, baseSq, baseBe, baseDl, goalSq, goalBe, goalDl, recordsGid, startRow});
+  localStorage.removeItem(CACHE_KEY);
+  closeSettings();
+  if (url || sheetId) await fetchData(true);
+  renderOverview();
+}
+
+// ── DIAGNOSTICS ──
+async function runDiag() {
+  const sheetId = getSheetId();
+  const out = document.getElementById('diag-out');
+  document.getElementById('diag-modal').hidden = false;
+  document.getElementById('settings-modal').hidden = true;
+  out.textContent = '⏳ 讀取中…';
+
+  let lines = [];
+  lines.push(`Sheet ID: ${sheetId || '(未設定)'}`);
+  lines.push(`GAS URL: ${getGAS() || '(未設定)'}`);
+  lines.push(`儲存設定: ${JSON.stringify(getCfg())}`);
+  lines.push('');
+
+  if (!sheetId) { out.textContent = lines.join('\n') + '\n❌ 請先設定 Sheet ID'; return; }
+
+  const sheets = ['📝 訓練記錄', '訓練記錄', '📈 進步趨勢圖', '進步趨勢圖', '⚡ 1RM 換算計算機', '⚡ 1RM 換算計機'];
+  for (const name of sheets) {
+    try {
+      const table = await gvizFetch(sheetId, name);
+      lines.push(`✅ 分頁「${name}」：${table.rows?.length || 0} 行 × ${table.cols?.length || 0} 欄`);
+      // Show first 3 non-empty rows
+      let shown = 0;
+      for (let i = 0; i < (table.rows?.length || 0) && shown < 3; i++) {
+        const r = table.rows[i];
+        if (!r.c) continue;
+        const cells = r.c.slice(0,6).map((c,ci)=>`[${ci}]${c?.v!=null?JSON.stringify(c.v):'—'}`).join(' ');
+        if (cells.replace(/\[.\]—/g,'').trim()) {
+          lines.push(`  行${i}: ${cells}`);
+          shown++;
+        }
+      }
+      // Find section headers
+      let secs = 0;
+      for (const r of (table.rows || [])) {
+        if (!r.c) continue;
+        for (const c of r.c) {
+          const t = c?.v ? String(c.v) : '';
+          if (t.includes('▌') || (t.match(/\d{4}\/\d/) && t.match(/第\s*\d+\s*週/))) { secs++; break; }
+        }
+      }
+      if (name === '訓練記錄') lines.push(`  → 找到段落標題：${secs} 個`);
+    } catch(e) {
+      lines.push(`❌ 分頁「${name}」：${e.message}`);
+    }
+  }
+  out.textContent = lines.join('\n');
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', async () => {
+  const cfg = getCfg();
+  if (!cfg.compDate) saveCfg({compDate:'2026-08-04', bodyweight:72});
+  renderOverview();
+  if (getGAS() || getSheetId()) {
+    // Force refresh on first load to avoid stale cache masking issues
+    await fetchData(true);
+  } else {
+    document.getElementById('recent-list').innerHTML =
+      '<div class="no-gas"><p>尚未連線 Google Sheets<br>請在設定頁填入試算表 ID</p><button class="btn btn-primary" style="width:auto;padding:10px 24px" onclick="openSettings()">設定連線</button></div>';
+  }
+});
+</script>
+</body>
+</html>
