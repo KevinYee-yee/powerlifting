@@ -265,7 +265,7 @@ details summary{font-size:12px;color:var(--muted);cursor:pointer;padding:6px 0;u
 
 <!-- Settings Modal -->
 <div class="modal-overlay" id="settings-modal" hidden>
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto">
     <h2>連線設定</h2>
     <p>貼上試算表 ID 即可立即讀取數據；之後請教練部署 GAS 後再填入網址，才能寫回實際成績。</p>
     <label class="form-label">Google Sheets ID</label>
@@ -850,16 +850,46 @@ async function fetchData(forceRefresh=false) {
   }
   try {
     toast('⏳ 同步中…');
-    const res = await fetch(gasUrl+'?action=all');
-    const data = await res.json();
+    const data = await gasFetch(gasUrl, {action: 'all'});
     if (!data.ok) throw new Error(data.error || 'GAS 回應錯誤');
     localStorage.setItem(CACHE_KEY, JSON.stringify({ts:Date.now(), data}));
     applyData(data);
     toast('✅ 已同步');
   } catch(e) {
-    toast('❌ 無法連線 GAS');
-    console.error(e);
+    console.warn('GAS 失敗，改用直接讀取：', e.message);
+    if (sheetId) {
+      toast('⚠️ GAS 無法連線，改用直接讀取…');
+      await fetchDataDirect(sheetId, forceRefresh);
+    } else {
+      toast('❌ 無法連線 GAS，也未設定 Sheet ID');
+    }
   }
+}
+
+// JSONP wrapper for GAS (bypasses CORS from GitHub Pages)
+let _gasCnt = 0;
+function gasFetch(gasUrl, params) {
+  return new Promise((resolve, reject) => {
+    const cb = '__gas_' + (++_gasCnt) + '_' + Date.now();
+    const s = document.createElement('script');
+    const timer = setTimeout(() => {
+      delete window[cb]; s.parentNode?.removeChild(s);
+      reject(new Error('GAS 連線逾時'));
+    }, 15000);
+    window[cb] = data => {
+      clearTimeout(timer);
+      delete window[cb]; s.parentNode?.removeChild(s);
+      resolve(data);
+    };
+    s.onerror = () => {
+      clearTimeout(timer);
+      delete window[cb]; s.parentNode?.removeChild(s);
+      reject(new Error('GAS 連線失敗'));
+    };
+    const qs = new URLSearchParams({...params, callback: cb});
+    s.src = `${gasUrl}?${qs}`;
+    document.head.appendChild(s);
+  });
 }
 
 function applyData(data) {
@@ -1642,8 +1672,7 @@ async function syncSession() {
 
   try {
     const encoded = encodeURIComponent(JSON.stringify(updates));
-    const res = await fetch(`${url}?action=write&updates=${encoded}`);
-    const data = await res.json();
+    const data = await gasFetch(url, {action: 'write', updates: JSON.stringify(updates)});
     if (!data.ok) throw new Error(data.error);
     toast(`✅ 已同步 ${data.written} 筆數據到 Sheets`);
     // Refresh data
@@ -1826,7 +1855,10 @@ function openSettings() {
 }
 function closeSettings() { document.getElementById('settings-modal').hidden = true; }
 async function saveSettings() {
-  const sheetId = document.getElementById('sheet-id-input').value.trim();
+  // Accept full Sheets URL or just the ID
+  const rawSheetInput = document.getElementById('sheet-id-input').value.trim();
+  const sheetIdMatch = rawSheetInput.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  const sheetId = sheetIdMatch ? sheetIdMatch[1] : rawSheetInput;
   const url     = document.getElementById('gas-input').value.trim();
   const compDate = document.getElementById('comp-date-input').value;
   const bw   = parseFloat(document.getElementById('bw-input').value) || 72;
