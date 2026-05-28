@@ -1366,56 +1366,97 @@ function setGrowthRange(r, btn) {
   renderE1RMChart();
 }
 
-// Volume chart: group by week, sum by lift
-function buildWeeklyVolume() {
+// Volume chart: group by week number (same style as e1RM chart)
+function buildWeeklyVolumeData() {
+  const startRow = getCfg().startRow || 1;
   const weekMap = {};
+  const weekOrder = [];
+
   for (const r of records) {
-    if (r.actualWeight === null || r.volume === null || !r.date) continue;
-    const d = new Date(r.date);
-    const mon = new Date(d);
-    mon.setDate(d.getDate() - (d.getDay()===0 ? 6 : d.getDay()-1));
-    const wk = `${mon.getMonth()+1}/${mon.getDate()}`;
-    if (!weekMap[wk]) weekMap[wk] = {squat:0, bench:0, deadlift:0, acc:0};
+    if (r.rowIndex < startRow) continue;
+    if (r.actualWeight === null) continue;
+    // Use spreadsheet volume if available, otherwise compute from actual data
+    const vol = r.volume ?? (r.actualWeight && r.actualReps ? r.actualWeight * r.actualReps : 0);
+    if (!vol) continue;
+    const wm = (r.section || '').match(/第\s*(\d+)\s*週/);
+    if (!wm) continue;
+    const wk = parseInt(wm[1]);
+    if (!weekMap[wk]) {
+      weekMap[wk] = { sq: 0, be: 0, dl: 0, acc: 0, dateRange: extractWeekDateRange(r.section || '') };
+      weekOrder.push(wk);
+    }
     const lift = liftOf(r.exercise);
-    if (lift) weekMap[wk][lift] += (r.volume || 0);
-    else weekMap[wk].acc += (r.volume || 0);
+    if (lift === 'squat')    weekMap[wk].sq  += vol;
+    else if (lift === 'bench')    weekMap[wk].be  += vol;
+    else if (lift === 'deadlift') weekMap[wk].dl  += vol;
+    else                          weekMap[wk].acc += vol;
   }
-  const keys = Object.keys(weekMap);
-  if (volRange === '6w') return {keys:keys.slice(-6), map:weekMap};
-  return {keys, map:weekMap};
+
+  let weeks = [...new Set(weekOrder)].sort((a, b) => a - b);
+  if (volRange === '6w') weeks = weeks.slice(-6);
+
+  return {
+    weeks,
+    labels: weeks.map(wk => {
+      const d = weekMap[wk]?.dateRange;
+      return d ? [`第${wk}週`, `(${d})`] : [`第${wk}週`];
+    }),
+    sqData:  weeks.map(wk => weekMap[wk]?.sq  || 0),
+    beData:  weeks.map(wk => weekMap[wk]?.be  || 0),
+    dlData:  weeks.map(wk => weekMap[wk]?.dl  || 0),
+    accData: weeks.map(wk => weekMap[wk]?.acc || 0),
+  };
 }
 
 function renderVolumeChart() {
-  const {keys, map} = buildWeeklyVolume();
-  if (!keys.length) return;
+  const { labels, sqData, beData, dlData, accData } = buildWeeklyVolumeData();
+  if (!labels.length) return;
 
-  const mk = (l, color, key) => ({
-    label: l,
-    data: keys.map(k => map[k][key] || 0),
-    backgroundColor: color+'99',
+  const mkDs = (data, color, name) => ({
+    label: name,
+    data,
+    backgroundColor: color + 'bb',
     borderColor: color,
     borderWidth: 1,
-    borderRadius: 3,
+    borderRadius: 4,
+    borderSkipped: false,
   });
 
   if (chartVol) chartVol.destroy();
   chartVol = new Chart(document.getElementById('volume-chart'), {
     type: 'bar',
     data: {
-      labels: keys,
+      labels,
       datasets: [
-        mk('深蹲',   '#f59e0b', 'squat'),
-        mk('臥推',   '#60a5fa', 'bench'),
-        mk('硬舉',   '#f87171', 'deadlift'),
-        mk('輔助',   '#6b7280', 'acc'),
+        mkDs(sqData,  '#f59e0b', '深蹲'),
+        mkDs(beData,  '#60a5fa', '臥推'),
+        mkDs(dlData,  '#f87171', '硬舉'),
+        mkDs(accData, '#6b7280', '輔助'),
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: {legend:{display:false}, tooltip:{backgroundColor:'#111',borderColor:'#333',borderWidth:1,titleColor:'#f0ece4',bodyColor:'rgba(240,236,228,.7)'}},
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111', borderColor: '#333', borderWidth: 1,
+          titleColor: '#f0ece4', bodyColor: 'rgba(240,236,228,.7)',
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y ? Math.round(ctx.parsed.y) + ' kg' : '—'}` }
+        },
+        datalabels: {
+          anchor: 'end',
+          align: 'top',
+          offset: 2,
+          formatter: v => v > 0 ? Math.round(v) : '',
+          font: { size: 9, weight: '700' },
+          color: ctx => ctx.dataset.borderColor,
+        }
+      },
       scales: {
-        x: {stacked:true, ticks:{color:'rgba(240,236,228,.4)',font:{size:10}}, grid:{color:'#1a1a1a'}},
-        y: {stacked:true, ticks:{color:'rgba(240,236,228,.4)',font:{size:10}}, grid:{color:'#1a1a1a'}}
+        x: { ticks: { color: 'rgba(240,236,228,.5)', font: { size: 10 }, maxRotation: 0 }, grid: { color: '#1a1a1a' } },
+        y: { ticks: { color: 'rgba(240,236,228,.4)', font: { size: 10 } }, grid: { color: '#1a1a1a' },
+             title: { display: true, text: '訓練量 (kg)', color: 'rgba(240,236,228,.3)', font: { size: 10 } } }
       }
     }
   });
