@@ -1929,17 +1929,33 @@ async function runDiag() {
 }
 
 // ── INIT ──
+// ── 預設值（第一次打開自動套用，不需手動設定）──
+const DEFAULTS = {
+  sheetId:    '19P8a8lFmQpVCD8AsOJ_xlzifFpVgd48f',
+  recordsGid: '1491016348',
+  startRow:   73,
+  compDate:   '2026-08-04',
+  bodyweight: 73,
+  baseSq: 105, baseBe: 68,  baseDl: 150,
+  goalSq: 115, goalBe: 75,  goalDl: 160,
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
+  // 第一次開啟（localStorage 是空的）→ 自動套用預設值
+  if (!getSheetId()) localStorage.setItem(SHEET_KEY, DEFAULTS.sheetId);
   const cfg = getCfg();
-  if (!cfg.compDate) saveCfg({compDate:'2026-08-04', bodyweight:72});
-  renderOverview();
-  if (getGAS() || getSheetId()) {
-    // Force refresh on first load to avoid stale cache masking issues
-    await fetchData(true);
-  } else {
-    document.getElementById('recent-list').innerHTML =
-      '<div class="no-gas"><p>尚未連線 Google Sheets<br>請在設定頁填入試算表 ID</p><button class="btn btn-primary" style="width:auto;padding:10px 24px" onclick="openSettings()">設定連線</button></div>';
+  if (!cfg.compDate) {
+    saveCfg({
+      compDate:   DEFAULTS.compDate,
+      bodyweight: DEFAULTS.bodyweight,
+      recordsGid: DEFAULTS.recordsGid,
+      startRow:   DEFAULTS.startRow,
+      baseSq: DEFAULTS.baseSq, baseBe: DEFAULTS.baseBe, baseDl: DEFAULTS.baseDl,
+      goalSq: DEFAULTS.goalSq, goalBe: DEFAULTS.goalBe, goalDl: DEFAULTS.goalDl,
+    });
   }
+  renderOverview();
+  await fetchData(true);
 });
 </script>
 </body>
