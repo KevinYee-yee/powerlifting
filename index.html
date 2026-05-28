@@ -1982,19 +1982,23 @@ const DEFAULTS = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 第一次開啟（localStorage 是空的）→ 自動套用預設值
+  // 任何欄位缺值都補預設值（不覆蓋使用者已填的）
   if (!getSheetId()) localStorage.setItem(SHEET_KEY, DEFAULTS.sheetId);
   const cfg = getCfg();
-  if (!cfg.compDate) {
-    saveCfg({
-      compDate:   DEFAULTS.compDate,
-      bodyweight: DEFAULTS.bodyweight,
-      recordsGid: DEFAULTS.recordsGid,
-      startRow:   DEFAULTS.startRow,
-      baseSq: DEFAULTS.baseSq, baseBe: DEFAULTS.baseBe, baseDl: DEFAULTS.baseDl,
-      goalSq: DEFAULTS.goalSq, goalBe: DEFAULTS.goalBe, goalDl: DEFAULTS.goalDl,
-    });
-  }
+  const merged = {
+    compDate:   cfg.compDate   || DEFAULTS.compDate,
+    bodyweight: cfg.bodyweight || DEFAULTS.bodyweight,
+    recordsGid: cfg.recordsGid || DEFAULTS.recordsGid,
+    startRow:   cfg.startRow   || DEFAULTS.startRow,
+    baseSq: cfg.baseSq || DEFAULTS.baseSq,
+    baseBe: cfg.baseBe || DEFAULTS.baseBe,
+    baseDl: cfg.baseDl || DEFAULTS.baseDl,
+    goalSq: cfg.goalSq || DEFAULTS.goalSq,
+    goalBe: cfg.goalBe || DEFAULTS.goalBe,
+    goalDl: cfg.goalDl || DEFAULTS.goalDl,
+    gasUrl: cfg.gasUrl || '',
+  };
+  saveCfg(merged);
   renderOverview();
   await fetchData(true);
 });
